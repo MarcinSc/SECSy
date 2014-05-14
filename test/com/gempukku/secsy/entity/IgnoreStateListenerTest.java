@@ -1,8 +1,8 @@
 package com.gempukku.secsy.entity;
 
 import com.gempukku.secsy.EntityRef;
+import com.gempukku.secsy.Event;
 import com.gempukku.secsy.SampleComponent;
-import com.gempukku.secsy.event.Event;
 import org.junit.Test;
 import org.mockito.Mockito;
 

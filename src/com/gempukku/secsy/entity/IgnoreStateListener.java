@@ -2,7 +2,7 @@ package com.gempukku.secsy.entity;
 
 import com.gempukku.secsy.Component;
 import com.gempukku.secsy.EntityRef;
-import com.gempukku.secsy.event.Event;
+import com.gempukku.secsy.Event;
 
 /**
  * @author Marcin Sciesinski <marcins78@gmail.com>

@@ -3,8 +3,7 @@ package com.gempukku.secsy;
 import com.gempukku.secsy.entity.EntityListener;
 import com.gempukku.secsy.entity.EntityStorage;
 import com.gempukku.secsy.entity.NormalStateListener;
-import com.gempukku.secsy.event.BeforeComponentRemoved;
-import com.gempukku.secsy.event.Event;
+import com.gempukku.secsy.entity.event.BeforeComponentRemoved;
 
 import java.util.Collection;
 
