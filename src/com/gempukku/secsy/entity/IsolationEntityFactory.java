@@ -55,15 +55,15 @@ public class IsolationEntityFactory<E> implements EntityFactory<E> {
             if (!componentValueObjects.containsKey(clazz)) {
                 componentValueObjects.put(clazz, componentFactory.createComponentValueObject(clazz));
             }
-            return (T) componentFactory.createComponent(clazz, componentValueObjects.get(clazz));
+            return componentFactory.createComponent(clazz, componentValueObjects.get(clazz));
         }
 
         @Override
         public synchronized <T extends Component> T getComponent(Class<T> clazz) {
             if (!storedComponents.contains(clazz)) {
-                throw new IllegalStateException("This entity does not contain a component of that class");
+                return null;
             }
-            return (T) componentFactory.getComponent(clazz, componentValueObjects.get(clazz));
+            return componentFactory.getComponent(clazz, componentValueObjects.get(clazz));
         }
 
         @Override
@@ -118,7 +118,7 @@ public class IsolationEntityFactory<E> implements EntityFactory<E> {
 
         @Override
         public boolean exists() {
-            return false;
+            return exists;
         }
 
         @Override

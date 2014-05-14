@@ -1,5 +1,6 @@
 package com.gempukku.secsy.component.annotation;
 
+import com.gempukku.secsy.SampleComponent;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

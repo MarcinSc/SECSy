@@ -6,6 +6,8 @@ import com.gempukku.secsy.entity.NormalStateListener;
 import com.gempukku.secsy.event.BeforeComponentRemoved;
 import com.gempukku.secsy.event.Event;
 
+import java.util.Collection;
+
 /**
  * @author Marcin Sciesinski <marcins78@gmail.com>
  */
@@ -26,13 +28,15 @@ public class SimpleEntityManager implements EntityManager<Event> {
     public EntityRef<Event> create() {
         EntityRef<Event> entity = entityFactory.createEntity(normalStateListener);
         entityStorage.storeNewEntity(entity);
-        entityFactory.setEntityListener(entity, normalStateListener);
         return entity;
     }
 
     @Override
     public void destroy(EntityRef<Event> entity) {
-        eventBus.sendEvent(entity, new BeforeComponentRemoved(entity.listComponents()));
+        final Collection<Class<? extends Component>> components = entity.listComponents();
+        if (components.size() > 0) {
+            eventBus.sendEvent(entity, new BeforeComponentRemoved(components));
+        }
         entityStorage.removeEntity(entity);
         entityFactory.destroyEntity(entity);
     }

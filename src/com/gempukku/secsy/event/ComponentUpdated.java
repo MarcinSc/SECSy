@@ -12,7 +12,7 @@ public class ComponentUpdated extends Event {
         this.clazz = clazz;
     }
 
-    public Class<? extends Component> getClazz() {
+    public Class<? extends Component> getComponent() {
         return clazz;
     }
 }

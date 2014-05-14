@@ -1,6 +1,7 @@
 package com.gempukku.secsy;
 
 import com.gempukku.secsy.entity.EntityListener;
+import com.gempukku.secsy.entity.io.EntityInputStream;
 import com.gempukku.secsy.entity.io.EntityOutputStream;
 import com.gempukku.secsy.event.Event;
 
@@ -30,6 +31,10 @@ public class StorableEntityManager implements EntityManager<Event> {
     }
 
     public void unloadEntity(EntityOutputStream outputStream, EntityRef<Event> entity) {
+
+    }
+
+    public void loadEntity(EntityInputStream inputStream) {
 
     }
 }

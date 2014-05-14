@@ -1,6 +1,7 @@
-package com.gempukku.secsy.component.annotation;
+package com.gempukku.secsy;
 
-import com.gempukku.secsy.Component;
+import com.gempukku.secsy.component.annotation.GetProperty;
+import com.gempukku.secsy.component.annotation.SetProperty;
 
 public interface SampleComponent extends Component {
     @GetProperty("value")
