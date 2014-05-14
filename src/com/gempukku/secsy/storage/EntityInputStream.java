@@ -1,6 +1,6 @@
-package org.terasology.ecs.storage;
+package com.gempukku.secsy.storage;
 
-import org.terasology.ecs.EntityRef;
+import com.gempukku.secsy.EntityRef;
 
 import java.util.Map;
 

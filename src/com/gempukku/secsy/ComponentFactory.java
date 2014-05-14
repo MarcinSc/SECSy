@@ -1,4 +1,4 @@
-package org.terasology.ecs;
+package com.gempukku.secsy;
 
 import java.util.Map;
 

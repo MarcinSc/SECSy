@@ -1,6 +1,6 @@
-package org.terasology.ecs.event;
+package com.gempukku.secsy.event;
 
-import org.terasology.ecs.Component;
+import com.gempukku.secsy.Component;
 
 /**
  * @author Marcin Sciesinski <marcins78@gmail.com>

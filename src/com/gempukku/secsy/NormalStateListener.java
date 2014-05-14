@@ -1,9 +1,9 @@
-package org.terasology.ecs;
+package com.gempukku.secsy;
 
-import org.terasology.ecs.event.BeforeComponentRemoved;
-import org.terasology.ecs.event.ComponentAdded;
-import org.terasology.ecs.event.ComponentUpdated;
-import org.terasology.ecs.event.Event;
+import com.gempukku.secsy.event.BeforeComponentRemoved;
+import com.gempukku.secsy.event.Event;
+import com.gempukku.secsy.event.ComponentAdded;
+import com.gempukku.secsy.event.ComponentUpdated;
 
 import java.util.Arrays;
 

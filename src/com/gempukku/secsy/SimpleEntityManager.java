@@ -1,7 +1,7 @@
-package org.terasology.ecs;
+package com.gempukku.secsy;
 
-import org.terasology.ecs.event.BeforeComponentRemoved;
-import org.terasology.ecs.event.Event;
+import com.gempukku.secsy.event.BeforeComponentRemoved;
+import com.gempukku.secsy.event.Event;
 
 /**
  * @author Marcin Sciesinski <marcins78@gmail.com>

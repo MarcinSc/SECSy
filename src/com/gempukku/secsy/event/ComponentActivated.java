@@ -1,10 +1,9 @@
-package org.terasology.ecs.event;
+package com.gempukku.secsy.event;
 
-import org.terasology.ecs.Component;
+import com.gempukku.secsy.Component;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Set;
 
 /**
  * @author Marcin Sciesinski <marcins78@gmail.com>

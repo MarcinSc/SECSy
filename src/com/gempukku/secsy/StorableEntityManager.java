@@ -1,7 +1,7 @@
-package org.terasology.ecs;
+package com.gempukku.secsy;
 
-import org.terasology.ecs.event.Event;
-import org.terasology.ecs.storage.EntityOutputStream;
+import com.gempukku.secsy.event.Event;
+import com.gempukku.secsy.storage.EntityOutputStream;
 
 /**
  * @author Marcin Sciesinski <marcins78@gmail.com>

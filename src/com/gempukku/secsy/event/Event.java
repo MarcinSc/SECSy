@@ -1,4 +1,4 @@
-package org.terasology.ecs.event;
+package com.gempukku.secsy.event;
 
 /**
  * @author Marcin Sciesinski <marcins78@gmail.com>

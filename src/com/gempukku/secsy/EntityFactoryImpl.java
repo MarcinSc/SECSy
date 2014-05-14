@@ -1,4 +1,4 @@
-package org.terasology.ecs;
+package com.gempukku.secsy;
 
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Sets;
