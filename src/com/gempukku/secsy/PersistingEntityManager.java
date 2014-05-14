@@ -7,7 +7,6 @@ import com.gempukku.secsy.entity.io.EntityInputStream;
 import com.gempukku.secsy.entity.io.EntityOutputStream;
 
 import java.util.Collection;
-import java.util.Map;
 
 /**
  * @author Marcin Sciesinski <marcins78@gmail.com>
@@ -24,7 +23,7 @@ public class PersistingEntityManager extends SimpleEntityManager {
 
     public void unloadEntity(EntityOutputStream<Event> outputStream, EntityRef<Event> entity) {
         final Collection<Class<? extends Component>> components = entity.listComponents();
-        if (components != null) {
+        if (components.size() > 0) {
             eventBus.sendEvent(entity, new BeforeComponentDeactivated(components));
         }
         final int entityId = getEntityId(entity);
@@ -33,14 +32,12 @@ public class PersistingEntityManager extends SimpleEntityManager {
     }
 
     public void loadEntity(EntityInputStream<Event> inputStream) {
-        final Map.Entry<Integer, EntityRef<Event>> entityEntry = inputStream.readEntity();
-        int id = entityEntry.getKey();
-        final EntityRef<Event> entity = entityEntry.getValue();
-        entityStorage.storeEntityWithId(id, entity);
+        final EntityInputStream.EntityWithId<Event> entityEntry = inputStream.readEntity();
+        entityStorage.storeEntityWithId(entityEntry.id, entityEntry.entity);
 
-        final Collection<Class<? extends Component>> components = entity.listComponents();
+        final Collection<Class<? extends Component>> components = entityEntry.entity.listComponents();
         if (components.size() > 0) {
-            eventBus.sendEvent(entity, new ComponentActivated(components));
+            eventBus.sendEvent(entityEntry.entity, new ComponentActivated(components));
         }
     }
 }
