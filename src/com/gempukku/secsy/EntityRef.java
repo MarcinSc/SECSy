@@ -1,7 +1,5 @@
 package com.gempukku.secsy;
 
-import com.gempukku.secsy.component.Component;
-
 import java.util.Collection;
 
 /**

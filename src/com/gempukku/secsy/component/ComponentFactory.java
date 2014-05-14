@@ -1,5 +1,7 @@
 package com.gempukku.secsy.component;
 
+import com.gempukku.secsy.Component;
+
 /**
  * @author Marcin Sciesinski <marcins78@gmail.com>
  */

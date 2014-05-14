@@ -1,6 +1,7 @@
-package com.gempukku.secsy;
+package com.gempukku.secsy.entity;
 
-import com.gempukku.secsy.component.Component;
+import com.gempukku.secsy.Component;
+import com.gempukku.secsy.EntityRef;
 
 /**
  * @author Marcin Sciesinski <marcins78@gmail.com>

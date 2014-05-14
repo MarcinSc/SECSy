@@ -1,4 +1,4 @@
-package com.gempukku.secsy.storage;
+package com.gempukku.secsy.entity.io;
 
 import com.gempukku.secsy.EntityRef;
 

@@ -1,7 +1,8 @@
 package com.gempukku.secsy;
 
+import com.gempukku.secsy.entity.EntityListener;
+import com.gempukku.secsy.entity.io.EntityOutputStream;
 import com.gempukku.secsy.event.Event;
-import com.gempukku.secsy.storage.EntityOutputStream;
 
 /**
  * @author Marcin Sciesinski <marcins78@gmail.com>

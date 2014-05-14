@@ -1,5 +1,8 @@
 package com.gempukku.secsy;
 
+import com.gempukku.secsy.entity.EntityListener;
+import com.gempukku.secsy.entity.EntityStorage;
+import com.gempukku.secsy.entity.NormalStateListener;
 import com.gempukku.secsy.event.BeforeComponentRemoved;
 import com.gempukku.secsy.event.Event;
 
@@ -21,7 +24,7 @@ public class SimpleEntityManager implements EntityManager<Event> {
 
     @Override
     public EntityRef<Event> create() {
-        EntityRef<Event> entity = entityFactory.createEntity();
+        EntityRef<Event> entity = entityFactory.createEntity(normalStateListener);
         entityStorage.storeNewEntity(entity);
         entityFactory.setEntityListener(entity, normalStateListener);
         return entity;

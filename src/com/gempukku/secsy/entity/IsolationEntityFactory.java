@@ -1,6 +1,8 @@
-package com.gempukku.secsy;
+package com.gempukku.secsy.entity;
 
-import com.gempukku.secsy.component.Component;
+import com.gempukku.secsy.Component;
+import com.gempukku.secsy.EntityFactory;
+import com.gempukku.secsy.EntityRef;
 import com.gempukku.secsy.component.ComponentFactory;
 
 import java.util.Collection;
@@ -13,10 +15,10 @@ import java.util.Set;
 /**
  * @author Marcin Sciesinski <marcins78@gmail.com>
  */
-public class EntityFactoryImpl<E> implements EntityFactory<E> {
+public class IsolationEntityFactory<E> implements EntityFactory<E> {
     private ComponentFactory<Object> componentFactory;
 
-    public EntityFactoryImpl(ComponentFactory componentFactory) {
+    public IsolationEntityFactory(ComponentFactory componentFactory) {
         this.componentFactory = (ComponentFactory<Object>) componentFactory;
     }
 
@@ -25,18 +27,24 @@ public class EntityFactoryImpl<E> implements EntityFactory<E> {
     }
 
     @Override
-    public EntityRef<E> createEntity() {
-        return new EntityRefImpl();
+    public EntityRef<E> createEntity(EntityListener<E> entityListener) {
+        return new EntityRefImpl(entityListener);
     }
 
     @Override
     public void destroyEntity(EntityRef<E> entity) {
+        ((EntityRefImpl) entity).exists = false;
     }
 
     private class EntityRefImpl implements EntityRef<E> {
         private Set<Class<? extends Component>> storedComponents = new HashSet<>();
         private Map<Class<? extends Component>, Object> componentValueObjects = new HashMap<>();
         private EntityListener<E> entityListener;
+        private boolean exists = true;
+
+        private EntityRefImpl(EntityListener<E> entityListener) {
+            this.entityListener = entityListener;
+        }
 
         private void setEntityListener(EntityListener<E> entityListener) {
             this.entityListener = entityListener;
@@ -80,13 +88,9 @@ public class EntityFactoryImpl<E> implements EntityFactory<E> {
 
                 if (componentFactory.isNewComponent(component)) {
                     storedComponents.add(clazz);
-                    if (entityListener != null) {
-                        entityListener.afterComponentAdded(this, clazz);
-                    }
+                    entityListener.afterComponentAdded(this, clazz);
                 } else {
-                    if (entityListener != null) {
-                        entityListener.afterComponentUpdated(this, clazz);
-                    }
+                    entityListener.afterComponentUpdated(this, clazz);
                 }
             }
         }
@@ -99,9 +103,7 @@ public class EntityFactoryImpl<E> implements EntityFactory<E> {
                 }
             }
 
-            if (entityListener != null) {
-                entityListener.beforeComponentRemoved(this, clazz);
-            }
+            entityListener.beforeComponentRemoved(this, clazz);
             for (Class<T> componentClass : clazz) {
                 storedComponents.remove(componentClass);
                 final Object valueObject = componentValueObjects.remove(componentClass);
@@ -116,14 +118,12 @@ public class EntityFactoryImpl<E> implements EntityFactory<E> {
 
         @Override
         public boolean exists() {
-            return true;
+            return false;
         }
 
         @Override
         public void send(E event) {
-            if (entityListener != null) {
-                entityListener.eventSent(this, event);
-            }
+            entityListener.eventSent(this, event);
         }
     }
 }
