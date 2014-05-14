@@ -1,6 +1,6 @@
 package com.gempukku.secsy.event;
 
-import com.gempukku.secsy.Component;
+import com.gempukku.secsy.component.Component;
 
 import java.util.Collection;
 import java.util.Collections;

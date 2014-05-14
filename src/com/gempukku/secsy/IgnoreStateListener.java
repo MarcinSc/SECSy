@@ -1,5 +1,6 @@
 package com.gempukku.secsy;
 
+import com.gempukku.secsy.component.Component;
 import com.gempukku.secsy.event.Event;
 
 /**

@@ -1,21 +1,23 @@
 package com.gempukku.secsy;
 
-import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.Sets;
-import com.google.common.collect.Table;
+import com.gempukku.secsy.component.Component;
+import com.gempukku.secsy.component.ComponentFactory;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
  * @author Marcin Sciesinski <marcins78@gmail.com>
  */
 public class EntityFactoryImpl<E> implements EntityFactory<E> {
-    private ComponentFactory componentFactory;
+    private ComponentFactory<Object> componentFactory;
 
     public EntityFactoryImpl(ComponentFactory componentFactory) {
-        this.componentFactory = componentFactory;
+        this.componentFactory = (ComponentFactory<Object>) componentFactory;
     }
 
     public void setEntityListener(EntityRef<E> entity, EntityListener<E> entityListener) {
@@ -32,8 +34,8 @@ public class EntityFactoryImpl<E> implements EntityFactory<E> {
     }
 
     private class EntityRefImpl implements EntityRef<E> {
-        private Set<Class<? extends Component>> storedComponents = Sets.newHashSet();
-        private Table<Class<? extends Component>, String, Object> savedValues = HashBasedTable.create();
+        private Set<Class<? extends Component>> storedComponents = new HashSet<>();
+        private Map<Class<? extends Component>, Object> componentValueObjects = new HashMap<>();
         private EntityListener<E> entityListener;
 
         private void setEntityListener(EntityListener<E> entityListener) {
@@ -42,10 +44,10 @@ public class EntityFactoryImpl<E> implements EntityFactory<E> {
 
         @Override
         public synchronized <T extends Component> T addComponent(Class<T> clazz) {
-            if (storedComponents.contains(clazz)) {
-                throw new IllegalStateException("This entity already contains a component of that class");
+            if (!componentValueObjects.containsKey(clazz)) {
+                componentValueObjects.put(clazz, componentFactory.createComponentValueObject(clazz));
             }
-            return componentFactory.createComponent(clazz);
+            return (T) componentFactory.createComponent(clazz, componentValueObjects.get(clazz));
         }
 
         @Override
@@ -53,13 +55,13 @@ public class EntityFactoryImpl<E> implements EntityFactory<E> {
             if (!storedComponents.contains(clazz)) {
                 throw new IllegalStateException("This entity does not contain a component of that class");
             }
-            return componentFactory.getComponent(clazz, savedValues.row(clazz));
+            return (T) componentFactory.getComponent(clazz, componentValueObjects.get(clazz));
         }
 
         @Override
-        public synchronized void saveComponents(Component ... components) {
+        public synchronized void saveComponents(Component... components) {
             for (Component component : components) {
-                Class<? extends Component> clazz = component.getClass();
+                Class<? extends Component> clazz = component.getComponentClass();
                 if (componentFactory.isNewComponent(component)) {
                     if (storedComponents.contains(clazz)) {
                         throw new IllegalStateException("This entity already contains a component of that class");
@@ -72,15 +74,16 @@ public class EntityFactoryImpl<E> implements EntityFactory<E> {
             }
 
             for (Component component : components) {
-                Class<? extends Component> clazz = component.getClass();
+                Class<? extends Component> clazz = component.getComponentClass();
+                final Object valueObject = componentValueObjects.get(clazz);
+                componentFactory.saveComponent(component, valueObject);
+
                 if (componentFactory.isNewComponent(component)) {
                     storedComponents.add(clazz);
-                    savedValues.rowMap().put(clazz, componentFactory.saveComponent(component));
                     if (entityListener != null) {
                         entityListener.afterComponentAdded(this, clazz);
                     }
                 } else {
-                    savedValues.rowMap().put(clazz, componentFactory.saveComponent(component));
                     if (entityListener != null) {
                         entityListener.afterComponentUpdated(this, clazz);
                     }
@@ -89,7 +92,7 @@ public class EntityFactoryImpl<E> implements EntityFactory<E> {
         }
 
         @Override
-        public synchronized <T extends Component> void removeComponents(Class<T> ... clazz) {
+        public synchronized <T extends Component> void removeComponents(Class<T>... clazz) {
             for (Class<T> componentClass : clazz) {
                 if (!storedComponents.contains(componentClass)) {
                     throw new IllegalStateException("This entity does not contain a component of that class");
@@ -101,7 +104,8 @@ public class EntityFactoryImpl<E> implements EntityFactory<E> {
             }
             for (Class<T> componentClass : clazz) {
                 storedComponents.remove(componentClass);
-                savedValues.rowMap().remove(componentClass);
+                final Object valueObject = componentValueObjects.remove(componentClass);
+                componentFactory.disposeComponentValueObject(valueObject);
             }
         }
 

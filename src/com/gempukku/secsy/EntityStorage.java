@@ -1,7 +1,6 @@
 package com.gempukku.secsy;
 
-import com.google.common.collect.Maps;
-
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -9,8 +8,8 @@ import java.util.Map;
  */
 public class EntityStorage<E> {
     // Bi-di map
-    private Map<Integer, EntityRef<E>> entities = Maps.newHashMap();
-    private Map<EntityRef<E>, Integer> entityIds = Maps.newHashMap();
+    private Map<Integer, EntityRef<E>> entities = new HashMap<>();
+    private Map<EntityRef<E>, Integer> entityIds = new HashMap<>();
 
     private int lastUsedId = 0;
 

@@ -1,9 +1,10 @@
 package com.gempukku.secsy;
 
+import com.gempukku.secsy.component.Component;
 import com.gempukku.secsy.event.BeforeComponentRemoved;
-import com.gempukku.secsy.event.Event;
 import com.gempukku.secsy.event.ComponentAdded;
 import com.gempukku.secsy.event.ComponentUpdated;
+import com.gempukku.secsy.event.Event;
 
 import java.util.Arrays;
 

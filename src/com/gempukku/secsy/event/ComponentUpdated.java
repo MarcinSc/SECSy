@@ -1,6 +1,6 @@
 package com.gempukku.secsy.event;
 
-import com.gempukku.secsy.Component;
+import com.gempukku.secsy.component.Component;
 
 /**
  * @author Marcin Sciesinski <marcins78@gmail.com>
