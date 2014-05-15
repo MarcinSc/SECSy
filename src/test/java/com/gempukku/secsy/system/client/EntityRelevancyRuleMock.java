@@ -1,5 +1,6 @@
 package com.gempukku.secsy.system.client;
 
+import com.gempukku.secsy.Component;
 import com.gempukku.secsy.EntityRef;
 
 import java.util.Collection;
@@ -43,7 +44,12 @@ public class EntityRelevancyRuleMock<E> implements EntityRelevancyRule<E> {
     }
 
     @Override
-    public EntityComponentFieldFilter<E> getComponentFieldFilter() {
-        return null;
+    public boolean isComponentRelevant(EntityRef<E> clientEntity, EntityRef<E> entity, Component component) {
+        return false;
+    }
+
+    @Override
+    public boolean isComponentFieldRelevant(EntityRef<E> clientEntity, EntityRef<E> entity, Component component, String field) {
+        return false;
     }
 }
