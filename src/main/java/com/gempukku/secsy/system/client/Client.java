@@ -3,7 +3,7 @@ package com.gempukku.secsy.system.client;
 import com.gempukku.secsy.EntityRef;
 
 public interface Client<E> {
-    public void addEntity(int entityId, EntityRef<E> entity);
+    public void updateEntity(int entityId, EntityRef<E> entity);
 
     public void removeEntity(int entityId);
 

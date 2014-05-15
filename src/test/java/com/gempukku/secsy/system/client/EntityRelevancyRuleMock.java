@@ -41,4 +41,9 @@ public class EntityRelevancyRuleMock<E> implements EntityRelevancyRule<E> {
     public boolean isRelevanceImpactingEvent(E event) {
         return impactingEvent != null && impactingEvent == event.getClass();
     }
+
+    @Override
+    public EntityComponentFieldFilter<E> getComponentFieldFilter() {
+        return null;
+    }
 }

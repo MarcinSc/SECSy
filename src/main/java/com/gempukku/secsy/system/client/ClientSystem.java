@@ -126,7 +126,7 @@ public class ClientSystem<E> {
 
     private void addEntityIfNotTracked(Set<Integer> trackedEntities, Client<E> client, EntityRef<E> relevantEntity, int entityId) {
         if (!trackedEntities.contains(entityId)) {
-            client.addEntity(entityId, relevantEntity);
+            client.updateEntity(entityId, relevantEntity);
             trackedEntities.add(entityId);
         }
     }

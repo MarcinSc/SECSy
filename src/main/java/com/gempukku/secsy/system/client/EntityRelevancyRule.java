@@ -10,4 +10,6 @@ public interface EntityRelevancyRule<E> {
     public boolean isEntityRelevant(EntityRef<E> clientEntity, EntityRef<E> entity);
 
     public boolean isRelevanceImpactingEvent(E event);
+
+    public EntityComponentFieldFilter<E> getComponentFieldFilter();
 }

@@ -52,7 +52,7 @@ public class ClientSystemTest {
 
         clientSystem.addClient("1", clientEntity1, client1);
 
-        Mockito.verify(client1).addEntity(1, entity1);
+        Mockito.verify(client1).updateEntity(1, entity1);
         Mockito.verifyNoMoreInteractions(client1, clientEntity1);
     }
 
@@ -66,7 +66,7 @@ public class ClientSystemTest {
 
         clientSystem.addEntityRelevancyRule(relevancyRule);
 
-        Mockito.verify(client1).addEntity(1, entity1);
+        Mockito.verify(client1).updateEntity(1, entity1);
         Mockito.verifyNoMoreInteractions(client1, clientEntity1);
 
         clientSystem.removeEntityRelevancyRule(relevancyRule);
@@ -99,7 +99,7 @@ public class ClientSystemTest {
         clientSystem.addEntityRelevancyRule(relevancyRule2);
         clientSystem.addClient("1", clientEntity1, client1);
 
-        Mockito.verify(client1).addEntity(1, entity1);
+        Mockito.verify(client1).updateEntity(1, entity1);
         Mockito.verifyNoMoreInteractions(client1, clientEntity1);
     }
 
@@ -114,7 +114,7 @@ public class ClientSystemTest {
         clientSystem.addEntityRelevancyRule(relevancyRule2);
         clientSystem.addClient("1", clientEntity1, client1);
 
-        Mockito.verify(client1).addEntity(1, entity1);
+        Mockito.verify(client1).updateEntity(1, entity1);
         Mockito.verifyNoMoreInteractions(client1, clientEntity1);
 
         clientSystem.removeEntityRelevancyRule(relevancyRule);
@@ -132,8 +132,8 @@ public class ClientSystemTest {
         clientSystem.addEntityRelevancyRule(relevancyRule2);
         clientSystem.addClient("1", clientEntity1, client1);
 
-        Mockito.verify(client1).addEntity(1, entity1);
-        Mockito.verify(client1).addEntity(2, entity2);
+        Mockito.verify(client1).updateEntity(1, entity1);
+        Mockito.verify(client1).updateEntity(2, entity2);
         Mockito.verifyNoMoreInteractions(client1, clientEntity1);
     }
 
@@ -160,7 +160,7 @@ public class ClientSystemTest {
         clientSystem.addEventRelevancyRule(eventRelevancyRule);
         clientSystem.addClient("1", clientEntity1, client1);
 
-        Mockito.verify(client1).addEntity(1, entity1);
+        Mockito.verify(client1).updateEntity(1, entity1);
         Mockito.verifyNoMoreInteractions(client1, clientEntity1);
 
         SampleEvent event = new SampleEvent();
@@ -198,7 +198,7 @@ public class ClientSystemTest {
         clientSystem.addEventRelevancyRule(eventRelevancyRule);
         clientSystem.addClient("1", clientEntity1, client1);
 
-        Mockito.verify(client1).addEntity(1, entity1);
+        Mockito.verify(client1).updateEntity(1, entity1);
         Mockito.verifyNoMoreInteractions(client1, clientEntity1);
 
         SampleEvent event = new SampleEvent();
@@ -226,7 +226,7 @@ public class ClientSystemTest {
         SampleEvent event = new SampleEvent();
         clientSystem.eventReceived(entity1, event);
 
-        Mockito.verify(client1).addEntity(1, entity1);
+        Mockito.verify(client1).updateEntity(1, entity1);
         Mockito.verifyNoMoreInteractions(client1, clientEntity1);
     }
 
@@ -264,7 +264,7 @@ public class ClientSystemTest {
         clientSystem.addEventRelevancyRule(eventRelevancyRule);
         clientSystem.addClient("1", clientEntity1, client1);
 
-        Mockito.verify(client1).addEntity(1, entity1);
+        Mockito.verify(client1).updateEntity(1, entity1);
         Mockito.verifyNoMoreInteractions(client1, clientEntity1);
 
         entityRelevancyRule.setClientRelevantEntities(clientEntity1, null);
@@ -289,7 +289,7 @@ public class ClientSystemTest {
         clientSystem.addEventRelevancyRule(eventRelevancyRule);
         clientSystem.addClient("1", clientEntity1, client1);
 
-        Mockito.verify(client1).addEntity(1, entity1);
+        Mockito.verify(client1).updateEntity(1, entity1);
         Mockito.verifyNoMoreInteractions(client1, clientEntity1);
 
         entityRelevancyRule.setClientRelevantEntities(clientEntity1, null);
@@ -333,7 +333,7 @@ public class ClientSystemTest {
         clientSystem.addEventRelevancyRule(eventRelevancyRule);
         clientSystem.addClient("1", clientEntity1, client1);
 
-        Mockito.verify(client1).addEntity(1, entity1);
+        Mockito.verify(client1).updateEntity(1, entity1);
         Mockito.verifyNoMoreInteractions(client1, clientEntity1);
 
         clientSystem.removeEventRelevancyRule(eventRelevancyRule);
