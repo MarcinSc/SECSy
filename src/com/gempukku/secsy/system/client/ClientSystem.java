@@ -29,13 +29,11 @@ public class ClientSystem<E> {
         clientEntities.put(clientId, clientEntity);
         trackedEntitiesOnClient.put(clientId, trackedEntities);
 
+        // Send any entities that are relevant to the client
         for (EntityRelevancyRule<E> entityRelevancyRule : entityRelevancyRules) {
             for (EntityRef<E> relevantEntity : entityRelevancyRule.listRelevantEntities(clientEntity)) {
                 int entityId = entityManager.getEntityId(relevantEntity);
-                if (!trackedEntities.contains(entityId)) {
-                    client.addEntity(entityId, relevantEntity);
-                    trackedEntities.add(entityId);
-                }
+                addEntityIfNotTracked(trackedEntities, client, relevantEntity, entityId);
             }
         }
     }
@@ -51,16 +49,14 @@ public class ClientSystem<E> {
     public void addEntityRelevancyRule(EntityRelevancyRule<E> entityRelevancyRule) {
         entityRelevancyRules.add(entityRelevancyRule);
 
+        // Send any entities that become relevant thanks to this rule
         for (Map.Entry<String, EntityRef<E>> clientEntity : clientEntities.entrySet()) {
             String clientId = clientEntity.getKey();
             final Set<Integer> trackedEntities = trackedEntitiesOnClient.get(clientId);
             final Client<E> client = clients.get(clientId);
             for (EntityRef<E> relevantEntity : entityRelevancyRule.listRelevantEntities(clientEntity.getValue())) {
                 int entityId = entityManager.getEntityId(relevantEntity);
-                if (!trackedEntities.contains(entityId)) {
-                    client.addEntity(entityId, relevantEntity);
-                    trackedEntities.add(entityId);
-                }
+                addEntityIfNotTracked(trackedEntities, client, relevantEntity, entityId);
             }
         }
     }
@@ -68,31 +64,17 @@ public class ClientSystem<E> {
     public void removeEntityRelevancyRule(EntityRelevancyRule<E> entityRelevancyRule) {
         entityRelevancyRules.remove(entityRelevancyRule);
 
+        // Remove entities that are relevant thanks to this rule from the client,
+        // unless they are relevant thanks to any other rule
         for (Map.Entry<String, EntityRef<E>> clientIdAndEntity : clientEntities.entrySet()) {
             String clientId = clientIdAndEntity.getKey();
             final Client<E> client = clients.get(clientId);
             final EntityRef<E> clientEntity = clientIdAndEntity.getValue();
 
-            // We have to remove any entity that was relevant thanks to this rule from the client,
-            // unless it is relevant thanks to any other rule
             for (EntityRef<E> relevantEntity : entityRelevancyRule.listRelevantEntities(clientEntity)) {
-                if (!isStillRelevant(clientEntity, relevantEntity)) {
-                    final int entityId = entityManager.getEntityId(relevantEntity);
-                    client.removeEntity(entityId);
-                }
+                removeIfNoLongerRelevant(client, clientEntity, relevantEntity, entityManager.getEntityId(relevantEntity));
             }
         }
-    }
-
-    private boolean isStillRelevant(EntityRef<E> clientEntity, EntityRef<E> relevantEntity) {
-        boolean relevant = false;
-        for (EntityRelevancyRule<E> relevancyRule : entityRelevancyRules) {
-            if (relevancyRule.isEntityRelevant(clientEntity, relevantEntity)) {
-                relevant = true;
-                break;
-            }
-        }
-        return relevant;
     }
 
     public void addEventRelevancyRule(EventRelevancyRule<E> eventRelevancyRule) {
@@ -105,6 +87,8 @@ public class ClientSystem<E> {
 
     public void eventReceived(EntityRef<E> entity, E event) {
         final int entityId = entityManager.getEntityId(entity);
+
+        // Send the event to any clients tracking that entity if it is relevant for those client
         for (Map.Entry<String, Set<Integer>> clientTracked : trackedEntitiesOnClient.entrySet()) {
             if (clientTracked.getValue().contains(entityId)) {
                 final String clientId = clientTracked.getKey();
@@ -120,6 +104,8 @@ public class ClientSystem<E> {
             }
         }
 
+        // If this event impacts any relevance rule, recheck all the tracked entities for that rule unless they
+        // are relevant for any other rule
         for (EntityRelevancyRule<E> entityRelevancyRule : entityRelevancyRules) {
             if (entityRelevancyRule.isRelevanceImpactingEvent(event)) {
                 for (Map.Entry<String, EntityRef<E>> clientIdAndEntity : clientEntities.entrySet()) {
@@ -127,16 +113,38 @@ public class ClientSystem<E> {
                     final Set<Integer> trackedEntities = trackedEntitiesOnClient.get(clientId);
 
                     final boolean relevant = entityRelevancyRule.isEntityRelevant(clientIdAndEntity.getValue(), entity);
-                    final boolean tracked = trackedEntities.contains(entityId);
-                    if (relevant != tracked) {
-                        if (tracked) {
-                            clients.get(clientId).removeEntity(entityId);
-                        } else {
-                            clients.get(clientId).addEntity(entityId, entity);
-                        }
+
+                    if (relevant) {
+                        addEntityIfNotTracked(trackedEntities, clients.get(clientId), entity, entityId);
+                    } else {
+                        removeIfNoLongerRelevant(clients.get(clientId), clientIdAndEntity.getValue(), entity, entityId);
                     }
                 }
             }
         }
+    }
+
+    private void addEntityIfNotTracked(Set<Integer> trackedEntities, Client<E> client, EntityRef<E> relevantEntity, int entityId) {
+        if (!trackedEntities.contains(entityId)) {
+            client.addEntity(entityId, relevantEntity);
+            trackedEntities.add(entityId);
+        }
+    }
+
+    private void removeIfNoLongerRelevant(Client<E> client, EntityRef<E> clientEntity, EntityRef<E> relevantEntity, int entityId) {
+        if (!isStillRelevant(clientEntity, relevantEntity)) {
+            client.removeEntity(entityId);
+        }
+    }
+
+    private boolean isStillRelevant(EntityRef<E> clientEntity, EntityRef<E> relevantEntity) {
+        boolean relevant = false;
+        for (EntityRelevancyRule<E> relevancyRule : entityRelevancyRules) {
+            if (relevancyRule.isEntityRelevant(clientEntity, relevantEntity)) {
+                relevant = true;
+                break;
+            }
+        }
+        return relevant;
     }
 }
