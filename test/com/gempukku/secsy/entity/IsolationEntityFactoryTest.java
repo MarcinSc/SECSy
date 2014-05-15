@@ -5,11 +5,15 @@ import com.gempukku.secsy.EntityRef;
 import com.gempukku.secsy.Event;
 import com.gempukku.secsy.SampleComponent;
 import com.gempukku.secsy.component.ComponentFactory;
+import org.hamcrest.BaseMatcher;
+import org.hamcrest.Description;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+
+import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -169,7 +173,7 @@ public class IsolationEntityFactoryTest {
         Mockito.verifyNoMoreInteractions(entityListener, componentFactory);
         entity.saveComponents(component);
         Mockito.verify(componentFactory, Mockito.atLeast(0)).isNewComponent(Mockito.any(SampleComponent.class));
-        Mockito.verify(entityListener).afterComponentAdded(entity, SampleComponent.class);
+        Mockito.verify(entityListener).afterComponentAdded(Mockito.same(entity), Mockito.argThat(new SampleComponentMatcher()));
         Mockito.verify(componentFactory).saveComponent(component, valueObject);
         Mockito.verifyNoMoreInteractions(entityListener, componentFactory);
     }
@@ -183,7 +187,7 @@ public class IsolationEntityFactoryTest {
         Mockito.verify(componentFactory, Mockito.atLeast(0)).isNewComponent(component);
         Mockito.verify(componentFactory).createComponentValueObject(SampleComponent.class);
         Mockito.verify(componentFactory).createComponent(SampleComponent.class, valueObject);
-        Mockito.verify(entityListener).afterComponentAdded(entity, SampleComponent.class);
+        Mockito.verify(entityListener).afterComponentAdded(Mockito.same(entity), Mockito.argThat(new SampleComponentMatcher()));
         Mockito.verify(componentFactory).saveComponent(component, valueObject);
         Mockito.verifyNoMoreInteractions(entityListener, componentFactory);
 
@@ -191,9 +195,22 @@ public class IsolationEntityFactoryTest {
         entity.saveComponents(copy);
 
         Mockito.verify(componentFactory, Mockito.atLeast(0)).isNewComponent(copy);
-        Mockito.verify(entityListener).afterComponentUpdated(entity, SampleComponent.class);
+        Mockito.verify(entityListener).afterComponentUpdated(Mockito.same(entity), Mockito.argThat(new SampleComponentMatcher()));
         Mockito.verify(componentFactory).getComponent(SampleComponent.class, valueObject);
         Mockito.verify(componentFactory).saveComponent(copy, valueObject);
         Mockito.verifyNoMoreInteractions(entityListener, componentFactory);
+    }
+
+    private class SampleComponentMatcher extends BaseMatcher<Set<Class<? extends Component>>> {
+        @Override
+        public boolean matches(Object o) {
+            Set<Class<? extends Component>> components = (Set<Class<? extends Component>>) o;
+            return components.size() == 1
+                    && components.contains(SampleComponent.class);
+        }
+
+        @Override
+        public void describeTo(Description description) {
+        }
     }
 }

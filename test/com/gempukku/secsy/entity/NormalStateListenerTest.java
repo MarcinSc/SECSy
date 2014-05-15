@@ -1,5 +1,6 @@
 package com.gempukku.secsy.entity;
 
+import com.gempukku.secsy.Component;
 import com.gempukku.secsy.EntityRef;
 import com.gempukku.secsy.Event;
 import com.gempukku.secsy.EventBus;
@@ -12,6 +13,8 @@ import org.hamcrest.Description;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+
+import java.util.Collections;
 
 public class NormalStateListenerTest {
     private NormalStateListener listener;
@@ -27,13 +30,14 @@ public class NormalStateListenerTest {
 
     @Test
     public void componentAdded() {
-        listener.afterComponentAdded(entity, SampleComponent.class);
+        listener.afterComponentAdded(entity, Collections.<Class<? extends Component>>singleton(SampleComponent.class));
         Mockito.verify(eventBus).sendEvent(Mockito.same(entity), Mockito.argThat(
                 new BaseMatcher<Object>() {
                     @Override
                     public boolean matches(Object o) {
                         ComponentAdded event = (ComponentAdded) o;
-                        return event.getComponent() == SampleComponent.class;
+                        return event.getComponents().size() == 1
+                                && event.getComponents().contains(SampleComponent.class);
                     }
 
                     @Override
@@ -45,13 +49,14 @@ public class NormalStateListenerTest {
 
     @Test
     public void componentUpdated() {
-        listener.afterComponentUpdated(entity, SampleComponent.class);
+        listener.afterComponentUpdated(entity, Collections.<Class<? extends Component>>singleton(SampleComponent.class));
         Mockito.verify(eventBus).sendEvent(Mockito.same(entity), Mockito.argThat(
                 new BaseMatcher<Object>() {
                     @Override
                     public boolean matches(Object o) {
                         ComponentUpdated event = (ComponentUpdated) o;
-                        return event.getComponent() == SampleComponent.class;
+                        return event.getComponents().size() == 1
+                                && event.getComponents().contains(SampleComponent.class);
                     }
 
                     @Override
@@ -63,7 +68,7 @@ public class NormalStateListenerTest {
 
     @Test
     public void componentRemoved() {
-        listener.beforeComponentRemoved(entity, SampleComponent.class);
+        listener.beforeComponentRemoved(entity, Collections.<Class<? extends Component>>singleton(SampleComponent.class));
         Mockito.verify(eventBus).sendEvent(Mockito.same(entity), Mockito.argThat(
                 new BaseMatcher<Object>() {
                     @Override

@@ -1,19 +1,14 @@
 package com.gempukku.secsy.entity.event;
 
 import com.gempukku.secsy.Component;
-import com.gempukku.secsy.Event;
+
+import java.util.Collection;
 
 /**
  * @author Marcin Sciesinski <marcins78@gmail.com>
  */
-public class ComponentUpdated extends Event {
-    private Class<? extends Component> clazz;
-
-    public ComponentUpdated(Class<? extends Component> clazz) {
-        this.clazz = clazz;
-    }
-
-    public Class<? extends Component> getComponent() {
-        return clazz;
+public class ComponentUpdated extends ComponentEvent {
+    public ComponentUpdated(Collection<Class<? extends Component>> components) {
+        super(components);
     }
 }

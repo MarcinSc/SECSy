@@ -81,29 +81,52 @@ public class IsolationEntityFactory<E> implements EntityFactory<E> {
                 }
             }
 
-            for (Component component : components) {
-                Class<? extends Component> clazz = component.getComponentClass();
-                final Object valueObject = componentValueObjects.get(clazz);
-                componentFactory.saveComponent(component, valueObject);
+            Set<Class<? extends Component>> addedComponents = new HashSet<>();
 
+            for (Component component : components) {
                 if (componentFactory.isNewComponent(component)) {
+                    Class<? extends Component> clazz = component.getComponentClass();
+                    final Object valueObject = componentValueObjects.get(clazz);
+                    componentFactory.saveComponent(component, valueObject);
+
                     storedComponents.add(clazz);
-                    entityListener.afterComponentAdded(this, clazz);
-                } else {
-                    entityListener.afterComponentUpdated(this, clazz);
+                    addedComponents.add(clazz);
                 }
+            }
+
+            if (addedComponents.size() > 0) {
+                entityListener.afterComponentAdded(this, Collections.unmodifiableSet(addedComponents));
+            }
+
+            Set<Class<? extends Component>> updatedComponents = new HashSet<>();
+
+            for (Component component : components) {
+                if (!componentFactory.isNewComponent(component)) {
+                    Class<? extends Component> clazz = component.getComponentClass();
+                    final Object valueObject = componentValueObjects.get(clazz);
+                    componentFactory.saveComponent(component, valueObject);
+
+                    updatedComponents.add(clazz);
+                }
+            }
+
+            if (updatedComponents.size() > 0) {
+                entityListener.afterComponentUpdated(this, Collections.unmodifiableSet(updatedComponents));
             }
         }
 
         @Override
         public synchronized <T extends Component> void removeComponents(Class<T>... clazz) {
+            Set<Class<? extends Component>> removedComponents = new HashSet<>();
+
             for (Class<T> componentClass : clazz) {
                 if (!storedComponents.contains(componentClass)) {
                     throw new IllegalStateException("This entity does not contain a component of that class");
                 }
+                removedComponents.add(componentClass);
             }
 
-            entityListener.beforeComponentRemoved(this, clazz);
+            entityListener.beforeComponentRemoved(this, Collections.unmodifiableSet(removedComponents));
             for (Class<T> componentClass : clazz) {
                 storedComponents.remove(componentClass);
                 final Object valueObject = componentValueObjects.remove(componentClass);

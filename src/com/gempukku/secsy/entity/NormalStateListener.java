@@ -8,7 +8,7 @@ import com.gempukku.secsy.entity.event.BeforeComponentRemoved;
 import com.gempukku.secsy.entity.event.ComponentAdded;
 import com.gempukku.secsy.entity.event.ComponentUpdated;
 
-import java.util.Arrays;
+import java.util.Set;
 
 /**
  * @author Marcin Sciesinski <marcins78@gmail.com>
@@ -21,18 +21,18 @@ public class NormalStateListener implements EntityListener<Event> {
     }
 
     @Override
-    public void afterComponentAdded(EntityRef<Event> entity, Class<? extends Component> component) {
-        eventBus.sendEvent(entity, new ComponentAdded(component));
+    public void afterComponentAdded(EntityRef<Event> entity, Set<Class<? extends Component>> components) {
+        eventBus.sendEvent(entity, new ComponentAdded(components));
     }
 
     @Override
-    public void afterComponentUpdated(EntityRef<Event> entity, Class<? extends Component> component) {
-        eventBus.sendEvent(entity, new ComponentUpdated(component));
+    public void afterComponentUpdated(EntityRef<Event> entity, Set<Class<? extends Component>> components) {
+        eventBus.sendEvent(entity, new ComponentUpdated(components));
     }
 
     @Override
-    public void beforeComponentRemoved(EntityRef<Event> entity, Class<? extends Component>... component) {
-        eventBus.sendEvent(entity, new BeforeComponentRemoved(Arrays.asList(component)));
+    public void beforeComponentRemoved(EntityRef<Event> entity, Set<Class<? extends Component>> components) {
+        eventBus.sendEvent(entity, new BeforeComponentRemoved(components));
     }
 
     @Override
