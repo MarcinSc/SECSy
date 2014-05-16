@@ -44,4 +44,9 @@ public class SimpleEntityManager implements EntityManager<Event> {
     public int getEntityId(EntityRef<Event> entity) {
         return entityStorage.getEntityId(entity);
     }
+
+    @Override
+    public EntityRef<Event> getEntityById(int entityId) {
+        return entityStorage.getEntityById(entityId);
+    }
 }

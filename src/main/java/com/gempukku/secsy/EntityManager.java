@@ -9,4 +9,6 @@ public interface EntityManager<E> {
     public void destroy(EntityRef<E> entity);
 
     public int getEntityId(EntityRef<E> entity);
+
+    public EntityRef<E> getEntityById(int entityId);
 }

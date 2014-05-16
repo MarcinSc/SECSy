@@ -41,6 +41,9 @@ public class ClientSystemTest {
         Mockito.when(entityManager.getEntityId(entity1)).thenReturn(1);
         Mockito.when(entityManager.getEntityId(entity2)).thenReturn(2);
 
+        Mockito.when(entityManager.getEntityById(1)).thenReturn(entity1);
+        Mockito.when(entityManager.getEntityById(2)).thenReturn(entity2);
+
         clientSystem = new ClientSystem<>();
         clientSystem.setEntityManager(entityManager);
     }
@@ -344,6 +347,26 @@ public class ClientSystemTest {
         SampleEvent event = new SampleEvent();
         clientSystem.eventReceived(entity1, event);
 
+        Mockito.verifyNoMoreInteractions(client1, clientEntity1);
+    }
+    
+    @Test
+    public void updatingRelevancyRuleAddsAndRemovesTrackedEntities() {
+        EntityRelevancyRuleMock<Event> relevancyRule = new EntityRelevancyRuleMock<>();
+        relevancyRule.setClientRelevantEntities(clientEntity1, Collections.singleton(entity1));
+
+        clientSystem.addEntityRelevancyRule(relevancyRule);
+
+        clientSystem.addClient("1", clientEntity1, client1);
+
+        Mockito.verify(client1).updateEntity(1, entity1, Collections.singleton(relevancyRule));
+        Mockito.verifyNoMoreInteractions(client1, clientEntity1);
+
+        relevancyRule.setClientRelevantEntities(clientEntity1, Collections.singleton(entity2));
+        clientSystem.entityRelevanceRuleUpdatedForClient("1", relevancyRule);
+
+        Mockito.verify(client1).removeEntity(1);
+        Mockito.verify(client1).updateEntity(2, entity2, Collections.singleton(relevancyRule));
         Mockito.verifyNoMoreInteractions(client1, clientEntity1);
     }
 }
