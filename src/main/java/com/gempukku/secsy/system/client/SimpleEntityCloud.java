@@ -12,7 +12,7 @@ public class SimpleEntityCloud<E> implements EntityCloud<E> {
 
     @Override
     public boolean containsEntity(EntityRef<E> entity) {
-        return dependencies.containsKey(entity) || dependencies.containsValue(entity);
+        return roots.contains(entity) || dependencies.containsValue(entity);
     }
 
     @Override
