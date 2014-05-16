@@ -17,7 +17,7 @@ import org.mockito.Mockito;
 import java.util.Collections;
 
 public class NormalStateListenerTest {
-    private NormalStateListener listener;
+    private EntityListener listener;
     private EventBus eventBus;
     private EntityRef entity;
 

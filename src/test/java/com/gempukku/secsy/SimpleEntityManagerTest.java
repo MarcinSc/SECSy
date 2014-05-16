@@ -82,4 +82,14 @@ public class SimpleEntityManagerTest {
         Mockito.verify(entityStorage).getEntityId(entity);
         Mockito.verifyNoMoreInteractions(eventBus, entityFactory, entityStorage);
     }
+
+    @Test
+    public void getEntityById() {
+        Mockito.when(entityStorage.getEntityById(1)).thenReturn(entity);
+
+        assertEquals(entity, manager.getEntityById(1));
+
+        Mockito.verify(entityStorage).getEntityById(1);
+        Mockito.verifyNoMoreInteractions(eventBus, entityFactory, entityStorage);
+    }
 }
