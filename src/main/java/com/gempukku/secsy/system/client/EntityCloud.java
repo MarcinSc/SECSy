@@ -28,4 +28,8 @@ public interface EntityCloud<E> {
      * @return
      */
     public Collection<EntityRef<E>> removeEntity(EntityRef<E> entity);
+
+    public Collection<EntityRef<E>> getAllEntities();
+
+    public Collection<EntityRef<E>> getRootEntities();
 }

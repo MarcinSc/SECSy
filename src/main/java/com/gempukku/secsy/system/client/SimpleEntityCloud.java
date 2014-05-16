@@ -75,4 +75,9 @@ public class SimpleEntityCloud<E> implements EntityCloud<E> {
 
         return removedEntities;
     }
+
+    @Override
+    public Collection<EntityRef<E>> getAllEntities() {
+        return null;
+    }
 }

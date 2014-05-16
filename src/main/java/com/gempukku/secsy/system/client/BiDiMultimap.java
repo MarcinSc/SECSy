@@ -20,6 +20,10 @@ public class BiDiMultimap<K, V> {
         directionTwo.remove(v, k);
     }
 
+    public Collection<? extends V> getAllValues() {
+        return Collections.unmodifiableCollection(directionOne.values());
+    }
+
     public Collection<? extends V> getValues(K k) {
         return Collections.unmodifiableCollection(directionOne.get(k));
     }
