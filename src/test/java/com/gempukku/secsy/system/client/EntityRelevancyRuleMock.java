@@ -21,12 +21,12 @@ public class EntityRelevancyRuleMock<E> implements EntityRelevancyRule<E> {
     }
 
     @Override
-    public boolean isEntityRelevant(EntityRef<E> clientEntity, EntityRef<E> entity) {
+    public Collection<EntityRef<E>> listEntitiesToTrackDueToImpactingEvent(EntityRef<E> clientEntity, EntityRef<E> entity) {
         final Collection<EntityRef<E>> entityRefs = relevantClientEntities.get(clientEntity);
         if (entityRefs == null) {
-            return false;
+            return Collections.emptySet();
         }
-        return entityRefs.contains(entity);
+        return Collections.singleton(entity);
     }
 
     @Override

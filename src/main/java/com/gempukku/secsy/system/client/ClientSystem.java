@@ -17,7 +17,7 @@ public class ClientSystem<E> {
     private Map<String, Client<E>> clients = new HashMap<>();
     private Map<String, EntityRef<E>> clientEntities = new HashMap<>();
     // Directly relevant entities and what rules cause them to be tracked
-    private Map<String, Multimap<Integer, EntityRelevancyRule<E>>> trackedEntitiesOnClient = new HashMap<>();
+    private Map<String, Multimap<EntityRef<E>, EntityRelevancyRule<E>>> trackedEntitiesOnClient = new HashMap<>();
 
     private Set<EntityRelevancyRule<E>> entityRelevancyRules = new HashSet<>();
     private Set<EventRelevancyRule<E>> eventRelevancyRules = new HashSet<>();
@@ -27,7 +27,7 @@ public class ClientSystem<E> {
     }
 
     public void addClient(String clientId, EntityRef<E> clientEntity, Client<E> client) {
-        final Multimap<Integer, EntityRelevancyRule<E>> trackedEntities = HashMultimap.create();
+        final Multimap<EntityRef<E>, EntityRelevancyRule<E>> trackedEntities = HashMultimap.create();
 
         clients.put(clientId, client);
         clientEntities.put(clientId, clientEntity);
@@ -37,8 +37,8 @@ public class ClientSystem<E> {
         for (EntityRelevancyRule<E> entityRelevancyRule : entityRelevancyRules) {
             for (EntityRef<E> relevantEntity : entityRelevancyRule.listRelevantEntities(clientEntity)) {
                 int entityId = entityManager.getEntityId(relevantEntity);
-                trackedEntities.put(entityId, entityRelevancyRule);
-                updateEntity(trackedEntities.get(entityId), client, relevantEntity, entityId);
+                trackedEntities.put(relevantEntity, entityRelevancyRule);
+                updateEntity(trackedEntities.get(relevantEntity), client, relevantEntity, entityId);
             }
         }
     }
@@ -169,11 +169,11 @@ public class ClientSystem<E> {
                 for (Map.Entry<String, EntityRef<E>> clientIdAndEntity : clientEntities.entrySet()) {
                     String clientId = clientIdAndEntity.getKey();
                     final Multimap<Integer, EntityRelevancyRule<E>> trackedEntities = trackedEntitiesOnClient.get(clientId);
-                    final boolean relevant = entityRelevancyRule.isEntityRelevant(clientIdAndEntity.getValue(), entity);
+                    final Collection<EntityRef<E>> entitiesToTrack = entityRelevancyRule.listEntitiesToTrackDueToImpactingEvent(clientIdAndEntity.getValue(), entity);
                     final Client<E> client = clients.get(clientId);
 
                     boolean tracked = trackedEntities.get(entityId).contains(entityRelevancyRule);
-                    if (relevant && !tracked) {
+                    if (entitiesToTrack.size() > 0 && !tracked) {
                         trackedEntities.put(entityId, entityRelevancyRule);
                         updateEntity(trackedEntities.get(entityId), client, entity, entityId);
                     } else if (!relevant && tracked) {
