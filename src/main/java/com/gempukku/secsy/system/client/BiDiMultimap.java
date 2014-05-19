@@ -24,6 +24,10 @@ public class BiDiMultimap<K, V> {
         return Collections.unmodifiableCollection(directionOne.values());
     }
 
+    public Collection<? extends K> getAllKeys() {
+        return Collections.unmodifiableCollection(directionTwo.values());
+    }
+
     public Collection<? extends V> getValues(K k) {
         return Collections.unmodifiableCollection(directionOne.get(k));
     }
