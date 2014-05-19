@@ -3,6 +3,7 @@ package com.gempukku.secsy.system.indexing;
 import com.gempukku.secsy.Component;
 import com.gempukku.secsy.EntityRef;
 import com.gempukku.secsy.Event;
+import com.gempukku.secsy.EventListener;
 import com.gempukku.secsy.entity.event.BeforeComponentDeactivated;
 import com.gempukku.secsy.entity.event.BeforeComponentRemoved;
 import com.gempukku.secsy.entity.event.ComponentActivated;
@@ -19,7 +20,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-public class ComponentIndexingSystem implements ComponentIndexingManager<Event> {
+public class ComponentIndexingSystem implements ComponentIndexingManager<Event>, EventListener<Event> {
     private Map<Set<Class<? extends Component>>, RealIndex> indices = new HashMap<>();
     private Multimap<RealIndex, IndexAccess> indexAccess = HashMultimap.create();
 
@@ -32,6 +33,7 @@ public class ComponentIndexingSystem implements ComponentIndexingManager<Event> 
         finishedRegistration = true;
     }
 
+    @Override
     public void eventReceived(EntityRef<Event> entity, Event event) {
         if (!finishedRegistration) {
             throw new IllegalStateException("Should not receive events before system finishes initialization");

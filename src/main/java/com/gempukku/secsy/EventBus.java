@@ -5,4 +5,6 @@ package com.gempukku.secsy;
  */
 public interface EventBus<E> {
     public void sendEvent(EntityRef<E> entity, E event);
+    public void addEventListener(EventListener<E> eventListener);
+    public void removeEventListener(EventListener<E> eventListener);
 }
