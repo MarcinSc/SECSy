@@ -21,15 +21,9 @@ public interface EntityCloud<E> {
      */
     public Collection<EntityRef<E>> setEntityState(boolean root, EntityRef<E> entity, Collection<EntityRef<E>> entities);
 
-    /**
-     * Removes the entity (and all un-attached non-root dependent entities), returns a collection of entities that were
-     * removed.
-     * @param entity
-     * @return
-     */
-    public Collection<EntityRef<E>> removeEntity(EntityRef<E> entity);
-
     public Collection<EntityRef<E>> getAllEntities();
 
     public Collection<EntityRef<E>> getRootEntities();
+
+    public boolean isRootEntity(EntityRef<E> entity);
 }

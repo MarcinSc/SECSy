@@ -3,6 +3,7 @@ package com.gempukku.secsy.system.client;
 import com.gempukku.secsy.EntityRef;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -17,14 +18,20 @@ public class SimpleEntityCloud<E> implements EntityCloud<E> {
 
     @Override
     public Collection<EntityRef<E>> setEntityState(boolean root, EntityRef<E> entity, Collection<EntityRef<E>> entityDependencies) {
-        if (root) {
-            roots.add(entity);
-        } else {
-            if (!dependencies.containsValue(entity)) {
-                throw new IllegalArgumentException("Trying to add dependency for non-descendant non-root entity");
+        if (roots.contains(entity)) {
+            if (!root) {
+                roots.remove(entity);
             }
-            roots.remove(entity);
+        } else {
+            if (root) {
+                roots.add(entity);
+            } else {
+                if (!dependencies.containsValue(entity)) {
+                    throw new IllegalArgumentException("Trying to add dependency for non-descendant non-root entity");
+                }
+            }
         }
+
         Set<EntityRef<E>> removedEntities = new HashSet<>();
         final Collection<EntityRef<E>> oldDependencies = new HashSet<>(dependencies.getValues(entity));
 
@@ -46,7 +53,30 @@ public class SimpleEntityCloud<E> implements EntityCloud<E> {
 
         processRemovingDependencies(removedEntities, removedDependencies);
 
+        // Finally if it is no longer referenced and not a root, remove it as well
+        if (!root && !dependencies.containsValue(entity)) {
+            removedEntities.add(entity);
+        }
+
         return removedEntities;
+    }
+
+    @Override
+    public Collection<EntityRef<E>> getRootEntities() {
+        return Collections.unmodifiableSet(roots);
+    }
+
+    @Override
+    public boolean isRootEntity(EntityRef<E> entity) {
+        return roots.contains(entity);
+    }
+
+    @Override
+    public Collection<EntityRef<E>> getAllEntities() {
+        Set<EntityRef<E>> result = new HashSet<>();
+        result.addAll(roots);
+        result.addAll(dependencies.getAllValues());
+        return result;
     }
 
     private void processRemovingDependencies(Set<EntityRef<E>> reportedRemovedEntities, Collection<EntityRef<E>> removedDependencies) {
@@ -62,22 +92,5 @@ public class SimpleEntityCloud<E> implements EntityCloud<E> {
         if (removedDependenciesForLevel.size() > 0) {
             processRemovingDependencies(reportedRemovedEntities, removedDependenciesForLevel);
         }
-    }
-
-    @Override
-    public Collection<EntityRef<E>> removeEntity(EntityRef<E> entity) {
-        Set<EntityRef<E>> removedEntities = new HashSet<>();
-        roots.remove(entity);
-        
-        final Collection<EntityRef<E>> oldDependencies = dependencies.removeAllValues(entity);
-        removedEntities.add(entity);
-        processRemovingDependencies(removedEntities, oldDependencies);
-
-        return removedEntities;
-    }
-
-    @Override
-    public Collection<EntityRef<E>> getAllEntities() {
-        return null;
     }
 }

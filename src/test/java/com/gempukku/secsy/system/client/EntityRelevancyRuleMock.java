@@ -10,9 +10,10 @@ import java.util.Map;
 
 public class EntityRelevancyRuleMock<E> implements EntityRelevancyRule<E> {
     private Map<EntityRef<E>, Collection<EntityRef<E>>> relevantClientEntities = new HashMap<>();
+    private Map<EntityRef<E>, Map<EntityRef<E>, Collection<EntityRef<E>>>> relevantDependentEntitiesForClient = new HashMap<>();
     private Class<? extends E> impactingEvent;
 
-    public void setClientRelevantEntities(EntityRef<E> clientEntity, Collection<EntityRef<E>> relevantEntities) {
+    public void setClientDirectlyRelevantEntities(EntityRef<E> clientEntity, Collection<EntityRef<E>> relevantEntities) {
         relevantClientEntities.put(clientEntity, relevantEntities);
     }
 
@@ -21,21 +22,34 @@ public class EntityRelevancyRuleMock<E> implements EntityRelevancyRule<E> {
     }
 
     @Override
-    public Collection<EntityRef<E>> listEntitiesToTrackDueToImpactingEvent(EntityRef<E> clientEntity, EntityRef<E> entity) {
-        final Collection<EntityRef<E>> entityRefs = relevantClientEntities.get(clientEntity);
-        if (entityRefs == null) {
-            return Collections.emptySet();
-        }
-        return Collections.singleton(entity);
-    }
-
-    @Override
-    public Collection<EntityRef<E>> listRelevantEntities(EntityRef<E> clientEntity) {
+    public Collection<EntityRef<E>> listDirectlyRelevantEntities(EntityRef<E> clientEntity) {
         final Collection<EntityRef<E>> entityRefs = relevantClientEntities.get(clientEntity);
         if (entityRefs == null) {
             return Collections.emptySet();
         }
         return entityRefs;
+    }
+
+    @Override
+    public boolean isEntityDirectlyRelevant(EntityRef<E> clientEntity, EntityRef<E> entity) {
+        final Collection<EntityRef<E>> relevancies = relevantClientEntities.get(clientEntity);
+        if (relevancies == null) {
+            return false;
+        }
+        return relevancies.contains(entity);
+    }
+
+    @Override
+    public Collection<EntityRef<E>> listDependentRelevantEntities(EntityRef<E> clientEntity, EntityRef<E> entity) {
+        final Map<EntityRef<E>, Collection<EntityRef<E>>> dependencyMap = relevantDependentEntitiesForClient.get(clientEntity);
+        if (dependencyMap == null) {
+            return Collections.emptySet();
+        }
+        final Collection<EntityRef<E>> result = dependencyMap.get(entity);
+        if (result == null) {
+            return Collections.emptySet();
+        }
+        return result;
     }
 
     @Override
