@@ -16,7 +16,7 @@ public class ClientConnection<E> {
     private Client<E> client;
     private EntityRef<E> clientEntity;
     private Multimap<EntityRef<E>, EntityRelevancyRule<E>> trackingRules;
-    private Map<EntityRelevancyRule<E>, EntityCloud<E>> trackedEntities;
+    private Map<EntityRelevancyRule<E>, ObjectCloud<EntityRef<E>>> trackedEntities;
 
     public ClientConnection(Client<E> client, EntityRef<E> clientEntity) {
         this.client = client;
@@ -30,7 +30,7 @@ public class ClientConnection<E> {
 
         // Send any entities that are relevant to the client
         for (EntityRelevancyRule<E> entityRelevancyRule : entityRelevancyRules) {
-            trackedEntities.put(entityRelevancyRule, new SimpleEntityCloud<E>());
+            trackedEntities.put(entityRelevancyRule, new SimpleObjectCloud<EntityRef<E>>());
             for (EntityRef<E> relevantEntity : entityRelevancyRule.listDirectlyRelevantEntities(clientEntity)) {
                 entitiesToUpdate.add(relevantEntity);
                 processEntityGraph(entityRelevancyRule, trackedEntities.get(entityRelevancyRule), true, relevantEntity, entitiesToUpdate);
@@ -43,7 +43,7 @@ public class ClientConnection<E> {
     }
 
     public void removeEntityRelevancyRules(EntityManager<E> entityManager, EntityRelevancyRule<E> entityRelevancyRule) {
-        final EntityCloud<E> entityCloud = trackedEntities.get(entityRelevancyRule);
+        final ObjectCloud<EntityRef<E>> entityCloud = trackedEntities.get(entityRelevancyRule);
         final Collection<EntityRef<E>> changedEntities = entityCloud.getAllEntities();
 
         for (EntityRef<E> entity : changedEntities) {
@@ -105,7 +105,7 @@ public class ClientConnection<E> {
 
     public void checkEntityStatusForEntityRelevanceRule(EntityManager<E> entityManager, EntityRelevancyRule<E> entityRelevancyRule,
                                                         EntityRef<E> entity) {
-        final EntityCloud<E> entityCloud = trackedEntities.get(entityRelevancyRule);
+        final ObjectCloud<EntityRef<E>> entityCloud = trackedEntities.get(entityRelevancyRule);
 
         boolean relevant = entityRelevancyRule.isEntityDirectlyRelevant(clientEntity, entity);
         boolean tracked = entityCloud.isRootEntity(entity);
@@ -132,7 +132,7 @@ public class ClientConnection<E> {
     }
 
     private void processEntityGraph(EntityRelevancyRule<E> entityRelevancyRule,
-                                    EntityCloud<E> trackedEntities, boolean root, EntityRef<E> entity,
+                                    ObjectCloud<EntityRef<E>> trackedEntities, boolean root, EntityRef<E> entity,
                                     Collection<EntityRef<E>> entitiesToUpdate) {
         trackingRules.put(entity, entityRelevancyRule);
         final Collection<EntityRef<E>> dependentEntities = entityRelevancyRule.listDependentRelevantEntities(clientEntity, entity);
