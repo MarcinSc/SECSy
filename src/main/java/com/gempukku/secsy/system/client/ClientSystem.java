@@ -2,7 +2,6 @@ package com.gempukku.secsy.system.client;
 
 import com.gempukku.secsy.EntityManager;
 import com.gempukku.secsy.EntityRef;
-import com.google.common.collect.Multimap;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -13,6 +12,7 @@ import java.util.Set;
 
 public class ClientSystem<E> {
     private EntityManager<E> entityManager;
+    private Collection<Class<? extends E>> internalEntityStateEvents;
 
     private Map<String, ClientConnection<E>> clientConnections = new HashMap<>();
 
@@ -21,6 +21,10 @@ public class ClientSystem<E> {
 
     public void setEntityManager(EntityManager<E> entityManager) {
         this.entityManager = entityManager;
+    }
+
+    public void setInternalEntityStateEvents(Collection<Class<? extends E>> internalEntityStateEvents) {
+        this.internalEntityStateEvents = internalEntityStateEvents;
     }
 
     public void addClient(String clientId, EntityRef<E> clientEntity, Client<E> client) {
@@ -70,17 +74,25 @@ public class ClientSystem<E> {
     }
 
     public void eventReceived(EntityRef<E> entity, E event) {
-        final int entityId = entityManager.getEntityId(entity);
+        if (isInternalEntityStateEvent(event)) {
+            for (ClientConnection<E> clientConnection : clientConnections.values()) {
+                if (clientConnection.isTrackingEntity(entity)) {
+                    clientConnection.entityStateChanged(entityManager, entity);
+                }
+            }
+        } else {
+            final int entityId = entityManager.getEntityId(entity);
 
-        // Send the event to any clients tracking that entity if it is relevant for those client
-        for (ClientConnection<E> clientConnection : clientConnections.values()) {
-            if (clientConnection.isTrackingEntity(entity)) {
-                final EntityRef<E> clientEntity = clientConnection.getClientEntity();
-                final Client<E> client = clientConnection.getClient();
-                for (EventRelevancyRule<E> eventRelevancyRule : eventRelevancyRules) {
-                    if (eventRelevancyRule.isEventRelevant(clientEntity, entity, event)) {
-                        client.sendEvent(entityId, entity, event);
-                        break;
+            // Send the event to any clients tracking that entity if it is relevant for those client
+            for (ClientConnection<E> clientConnection : clientConnections.values()) {
+                if (clientConnection.isTrackingEntity(entity)) {
+                    final EntityRef<E> clientEntity = clientConnection.getClientEntity();
+                    final Client<E> client = clientConnection.getClient();
+                    for (EventRelevancyRule<E> eventRelevancyRule : eventRelevancyRules) {
+                        if (eventRelevancyRule.isEventRelevant(clientEntity, entity, event)) {
+                            client.sendEvent(entityId, entity, event);
+                            break;
+                        }
                     }
                 }
             }
@@ -94,5 +106,9 @@ public class ClientSystem<E> {
                 }
             }
         }
+    }
+
+    private boolean isInternalEntityStateEvent(E event) {
+        return internalEntityStateEvents.contains(event.getClass());
     }
 }

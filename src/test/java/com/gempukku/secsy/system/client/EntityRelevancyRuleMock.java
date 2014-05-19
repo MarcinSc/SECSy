@@ -17,6 +17,15 @@ public class EntityRelevancyRuleMock<E> implements EntityRelevancyRule<E> {
         relevantClientEntities.put(clientEntity, relevantEntities);
     }
 
+    public void setClientDependentRelevantEntities(EntityRef<E> clientEntity, EntityRef<E> entity, Collection<EntityRef<E>> dependentEntities) {
+        Map<EntityRef<E>, Collection<EntityRef<E>>> dependencyMap = relevantDependentEntitiesForClient.get(clientEntity);
+        if (dependencyMap == null) {
+            dependencyMap = new HashMap<>();
+            relevantDependentEntitiesForClient.put(clientEntity, dependencyMap);
+        }
+        dependencyMap.put(entity, dependentEntities);
+    }
+
     public void setImpactingEvent(Class<? extends E> impactingEvent) {
         this.impactingEvent = impactingEvent;
     }

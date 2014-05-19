@@ -77,17 +77,28 @@ public class ClientConnection<E> {
 
     public void entityRelevanceRuleUpdated(EntityManager<E> entityManager, EntityRelevancyRule<E> entityRelevancyRule,
                                            Collection<EntityRef<E>> directEntitiesToAdd, Collection<EntityRef<E>> directEntitiesToRemove) {
+        final ObjectCloud<EntityRef<E>> entityCloud = trackedEntities.get(entityRelevancyRule);
 
-        for (EntityRef<E> entity : directEntitiesToRemove) {
-            final int entityId = entityManager.getEntityId(entity);
-            trackingRules.remove(entity, entityRelevancyRule);
-            updateOrRemoveEntity(entity, entityId, trackingRules.get(entity));
-        }
+        Set<EntityRef<E>> entitiesToUpdateOrRemove = new HashSet<>();
 
         for (EntityRef<E> entity : directEntitiesToAdd) {
-            final int entityId = entityManager.getEntityId(entity);
-            trackingRules.put(entity, entityRelevancyRule);
-            updateEntity(trackingRules.get(entity), entity, entityId);
+            entitiesToUpdateOrRemove.add(entity);
+            processEntityGraph(entityRelevancyRule, entityCloud, true, entity, entitiesToUpdateOrRemove);
+        }
+
+        for (EntityRef<E> entity : directEntitiesToRemove) {
+            entitiesToUpdateOrRemove.add(entity);
+
+            trackingRules.remove(entity, entityRelevancyRule);
+            final Collection<EntityRef<E>> toRemove = entityCloud.setEntityState(false, entity, Collections.<EntityRef<E>>emptySet());
+            for (EntityRef<E> removedEntity : toRemove) {
+                trackingRules.remove(removedEntity, entityRelevancyRule);
+            }
+            entitiesToUpdateOrRemove.addAll(toRemove);
+        }
+
+        for (EntityRef<E> entityToUpdateOrRemove : entitiesToUpdateOrRemove) {
+            updateOrRemoveEntity(entityToUpdateOrRemove, entityManager.getEntityId(entityToUpdateOrRemove), trackingRules.get(entityToUpdateOrRemove));
         }
     }
 
@@ -131,14 +142,34 @@ public class ClientConnection<E> {
         }
     }
 
+    public void entityStateChanged(EntityManager<E> entityManager, EntityRef<E> entity) {
+        Set<EntityRef<E>> entitiesToUpdateOrRemove = new HashSet<>();
+        entitiesToUpdateOrRemove.add(entity);
+
+        for (EntityRelevancyRule<E> entityRelevancyRule : trackingRules.get(entity)) {
+            final ObjectCloud<EntityRef<E>> entityCloud = trackedEntities.get(entityRelevancyRule);
+            final boolean root = entityCloud.isRootEntity(entity);
+
+            processEntityGraph(entityRelevancyRule, entityCloud, root, entity, entitiesToUpdateOrRemove);
+        }
+
+        for (EntityRef<E> entityToUpdateOrRemove : entitiesToUpdateOrRemove) {
+            updateOrRemoveEntity(entityToUpdateOrRemove, entityManager.getEntityId(entityToUpdateOrRemove), trackingRules.get(entityToUpdateOrRemove));
+        }
+    }
+
     private void processEntityGraph(EntityRelevancyRule<E> entityRelevancyRule,
                                     ObjectCloud<EntityRef<E>> trackedEntities, boolean root, EntityRef<E> entity,
                                     Collection<EntityRef<E>> entitiesToUpdate) {
         trackingRules.put(entity, entityRelevancyRule);
         final Collection<EntityRef<E>> dependentEntities = entityRelevancyRule.listDependentRelevantEntities(clientEntity, entity);
-        trackedEntities.setEntityState(root, entity, dependentEntities);
+        final Collection<EntityRef<E>> toRemove = trackedEntities.setEntityState(root, entity, dependentEntities);
+        for (EntityRef<E> entityToRemove : toRemove) {
+            trackingRules.remove(entityToRemove, entityRelevancyRule);
+        }
 
         entitiesToUpdate.addAll(dependentEntities);
+        entitiesToUpdate.addAll(toRemove);
 
         for (EntityRef<E> dependentEntity : dependentEntities) {
             processEntityGraph(entityRelevancyRule, trackedEntities, false, dependentEntity, entitiesToUpdate);

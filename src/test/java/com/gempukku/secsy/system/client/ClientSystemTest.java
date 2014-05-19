@@ -46,6 +46,7 @@ public class ClientSystemTest {
 
         clientSystem = new ClientSystem<>();
         clientSystem.setEntityManager(entityManager);
+        clientSystem.setInternalEntityStateEvents(Collections.<Class<? extends Event>>emptySet());
     }
 
     @Test
@@ -367,6 +368,153 @@ public class ClientSystemTest {
 
         Mockito.verify(client1).removeEntity(1);
         Mockito.verify(client1).updateEntity(2, entity2, Collections.singleton(relevancyRule));
+        Mockito.verifyNoMoreInteractions(client1, clientEntity1);
+    }
+
+    @Test
+    public void explicitUpdatingRelevancyRuleAddsAndRemovesTrackedEntities() {
+        EntityRelevancyRuleMock<Event> relevancyRule = new EntityRelevancyRuleMock<>();
+        relevancyRule.setClientDirectlyRelevantEntities(clientEntity1, Collections.singleton(entity1));
+
+        clientSystem.addEntityRelevancyRule(relevancyRule);
+
+        clientSystem.addClient("1", clientEntity1, client1);
+
+        Mockito.verify(client1).updateEntity(1, entity1, Collections.singleton(relevancyRule));
+        Mockito.verifyNoMoreInteractions(client1, clientEntity1);
+
+        relevancyRule.setClientDirectlyRelevantEntities(clientEntity1, Collections.singleton(entity2));
+        clientSystem.entityRelevanceRuleUpdatedForClient("1", relevancyRule, Collections.singleton(entity2), Collections.singleton(entity1));
+
+        Mockito.verify(client1).removeEntity(1);
+        Mockito.verify(client1).updateEntity(2, entity2, Collections.singleton(relevancyRule));
+        Mockito.verifyNoMoreInteractions(client1, clientEntity1);
+    }
+
+    @Test
+    public void addingClientAddsRelevantDependentEntities() {
+        EntityRelevancyRuleMock<Event> relevancyRule = new EntityRelevancyRuleMock<>();
+        relevancyRule.setClientDirectlyRelevantEntities(clientEntity1, Collections.singleton(entity1));
+        relevancyRule.setClientDependentRelevantEntities(clientEntity1, entity1, Collections.singleton(entity2));
+
+        clientSystem.addEntityRelevancyRule(relevancyRule);
+
+        clientSystem.addClient("1", clientEntity1, client1);
+
+        Mockito.verify(client1).updateEntity(1, entity1, Collections.singleton(relevancyRule));
+        Mockito.verify(client1).updateEntity(2, entity2, Collections.singleton(relevancyRule));
+        Mockito.verifyNoMoreInteractions(client1, clientEntity1);
+    }
+
+    @Test
+    public void updatingRelevancyRuleAddsAndRemovesTrackedEntitiesWithDependencies() {
+        EntityRelevancyRuleMock<Event> relevancyRule = new EntityRelevancyRuleMock<>();
+        relevancyRule.setClientDirectlyRelevantEntities(clientEntity1, Collections.singleton(entity1));
+        relevancyRule.setClientDependentRelevantEntities(clientEntity1, entity1, Collections.singleton(entity2));
+
+        clientSystem.addEntityRelevancyRule(relevancyRule);
+
+        clientSystem.addClient("1", clientEntity1, client1);
+
+        Mockito.verify(client1).updateEntity(1, entity1, Collections.singleton(relevancyRule));
+        Mockito.verify(client1).updateEntity(2, entity2, Collections.singleton(relevancyRule));
+        Mockito.verifyNoMoreInteractions(client1, clientEntity1);
+
+        relevancyRule.setClientDirectlyRelevantEntities(clientEntity1, Collections.<EntityRef<Event>>emptySet());
+        clientSystem.entityRelevanceRuleUpdatedForClient("1", relevancyRule);
+
+        Mockito.verify(client1).removeEntity(1);
+        Mockito.verify(client1).removeEntity(2);
+        Mockito.verifyNoMoreInteractions(client1, clientEntity1);
+    }
+
+    @Test
+    public void eventUpdatingStateUpdatesRootEntity() {
+        clientSystem.setInternalEntityStateEvents(Collections.<Class<? extends Event>>singleton(SampleEvent.class));
+
+        EntityRelevancyRuleMock<Event> entityRelevancyRule = new EntityRelevancyRuleMock<>();
+        entityRelevancyRule.setClientDirectlyRelevantEntities(clientEntity1, Collections.singleton(entity1));
+
+        clientSystem.addEntityRelevancyRule(entityRelevancyRule);
+        clientSystem.addClient("1", clientEntity1, client1);
+
+        Mockito.verify(client1).updateEntity(1, entity1, Collections.singleton(entityRelevancyRule));
+        Mockito.verifyNoMoreInteractions(client1, clientEntity1);
+
+        SampleEvent event = new SampleEvent();
+        clientSystem.eventReceived(entity1, event);
+
+        Mockito.verify(client1, Mockito.times(2)).updateEntity(1, entity1, Collections.singleton(entityRelevancyRule));
+        Mockito.verifyNoMoreInteractions(client1, clientEntity1);
+    }
+
+    @Test
+    public void eventUpdatingStateUpdatesDependentEntity() {
+        clientSystem.setInternalEntityStateEvents(Collections.<Class<? extends Event>>singleton(SampleEvent.class));
+
+        EntityRelevancyRuleMock<Event> entityRelevancyRule = new EntityRelevancyRuleMock<>();
+        entityRelevancyRule.setClientDirectlyRelevantEntities(clientEntity1, Collections.singleton(entity1));
+        entityRelevancyRule.setClientDependentRelevantEntities(clientEntity1, entity1, Collections.singleton(entity2));
+
+        clientSystem.addEntityRelevancyRule(entityRelevancyRule);
+        clientSystem.addClient("1", clientEntity1, client1);
+
+        Mockito.verify(client1).updateEntity(1, entity1, Collections.singleton(entityRelevancyRule));
+        Mockito.verify(client1).updateEntity(2, entity2, Collections.singleton(entityRelevancyRule));
+        Mockito.verifyNoMoreInteractions(client1, clientEntity1);
+
+        SampleEvent event = new SampleEvent();
+        clientSystem.eventReceived(entity2, event);
+
+        Mockito.verify(client1, Mockito.times(2)).updateEntity(2, entity2, Collections.singleton(entityRelevancyRule));
+        Mockito.verifyNoMoreInteractions(client1, clientEntity1);
+    }
+
+    @Test
+    public void eventUpdatingStateUpdatesRootEntityAndUpdatesNewDependencies() {
+        clientSystem.setInternalEntityStateEvents(Collections.<Class<? extends Event>>singleton(SampleEvent.class));
+
+        EntityRelevancyRuleMock<Event> entityRelevancyRule = new EntityRelevancyRuleMock<>();
+        entityRelevancyRule.setClientDirectlyRelevantEntities(clientEntity1, Collections.singleton(entity1));
+
+        clientSystem.addEntityRelevancyRule(entityRelevancyRule);
+        clientSystem.addClient("1", clientEntity1, client1);
+
+        Mockito.verify(client1).updateEntity(1, entity1, Collections.singleton(entityRelevancyRule));
+        Mockito.verifyNoMoreInteractions(client1, clientEntity1);
+
+        entityRelevancyRule.setClientDependentRelevantEntities(clientEntity1, entity1, Collections.singleton(entity2));
+
+        SampleEvent event = new SampleEvent();
+        clientSystem.eventReceived(entity1, event);
+
+        Mockito.verify(client1, Mockito.times(2)).updateEntity(1, entity1, Collections.singleton(entityRelevancyRule));
+        Mockito.verify(client1).updateEntity(2, entity2, Collections.singleton(entityRelevancyRule));
+        Mockito.verifyNoMoreInteractions(client1, clientEntity1);
+    }
+
+    @Test
+    public void eventUpdatingStateUpdatesRootEntityAndRemovesOldDependencies() {
+        clientSystem.setInternalEntityStateEvents(Collections.<Class<? extends Event>>singleton(SampleEvent.class));
+
+        EntityRelevancyRuleMock<Event> entityRelevancyRule = new EntityRelevancyRuleMock<>();
+        entityRelevancyRule.setClientDirectlyRelevantEntities(clientEntity1, Collections.singleton(entity1));
+        entityRelevancyRule.setClientDependentRelevantEntities(clientEntity1, entity1, Collections.singleton(entity2));
+
+        clientSystem.addEntityRelevancyRule(entityRelevancyRule);
+        clientSystem.addClient("1", clientEntity1, client1);
+
+        Mockito.verify(client1).updateEntity(1, entity1, Collections.singleton(entityRelevancyRule));
+        Mockito.verify(client1).updateEntity(2, entity2, Collections.singleton(entityRelevancyRule));
+        Mockito.verifyNoMoreInteractions(client1, clientEntity1);
+
+        entityRelevancyRule.setClientDependentRelevantEntities(clientEntity1, entity1, Collections.<EntityRef<Event>>emptySet());
+
+        SampleEvent event = new SampleEvent();
+        clientSystem.eventReceived(entity1, event);
+
+        Mockito.verify(client1, Mockito.times(2)).updateEntity(1, entity1, Collections.singleton(entityRelevancyRule));
+        Mockito.verify(client1).removeEntity(2);
         Mockito.verifyNoMoreInteractions(client1, clientEntity1);
     }
 }
