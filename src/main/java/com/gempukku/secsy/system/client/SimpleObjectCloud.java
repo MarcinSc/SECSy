@@ -25,7 +25,7 @@ public class SimpleObjectCloud<E> implements ObjectCloud<E> {
                 roots.add(entity);
             } else {
                 if (!dependencies.containsValue(entity)) {
-                    throw new IllegalArgumentException("Trying to add dependency for non-descendant non-root entity");
+                    throw new IllegalArgumentException("Trying to set dependency for non-descendant non-root entity");
                 }
             }
         }
@@ -43,9 +43,12 @@ public class SimpleObjectCloud<E> implements ObjectCloud<E> {
             }
         }
 
-        for (E newEntity : entityDependencies) {
-            if (!oldDependencies.contains(newEntity)) {
-                dependencies.put(entity, newEntity);
+        // Add the new dependencies, only if this state set does not remove this one
+        if (containsEntity(entity)) {
+            for (E newEntity : entityDependencies) {
+                if (!oldDependencies.contains(newEntity)) {
+                    dependencies.put(entity, newEntity);
+                }
             }
         }
 
