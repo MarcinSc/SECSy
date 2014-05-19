@@ -39,6 +39,11 @@ public class NullEntityRef<E> implements EntityRef<E> {
     }
 
     @Override
+    public boolean hasComponent(Class<? extends Component> component) {
+        return false;
+    }
+
+    @Override
     public boolean exists() {
         return false;
     }

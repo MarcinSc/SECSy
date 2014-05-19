@@ -16,6 +16,8 @@ public interface EntityRef<E> {
 
     public Collection<Class<? extends Component>> listComponents();
 
+    public boolean hasComponent(Class<? extends Component> component);
+
     public boolean exists();
 
     public void send(E event);

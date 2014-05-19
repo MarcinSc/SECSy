@@ -140,6 +140,11 @@ public class IsolationEntityFactory<E> implements EntityFactory<E> {
         }
 
         @Override
+        public boolean hasComponent(Class<? extends Component> component) {
+            return storedComponents.contains(component);
+        }
+
+        @Override
         public boolean exists() {
             return exists;
         }
