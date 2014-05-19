@@ -189,4 +189,30 @@ public class SimpleObjectCloudTest {
         assertTrue(cloud.containsEntity(root1));
         assertTrue(cloud.containsEntity(root2));
     }
+
+    @Test
+    public void removingThreeLevelDependency() {
+        final Object root = new Object();
+        final Object dependency1 = new Object();
+        final Object dependency2 = new Object();
+
+        cloud.setEntityState(true, root, Collections.singleton(dependency1));
+        cloud.setEntityState(false, dependency1, Collections.singleton(dependency2));
+
+        final Collection<Object> toRemove = cloud.setEntityState(true, root, Collections.<Object>emptySet());
+        assertEquals(2, toRemove.size());
+        assertTrue(toRemove.contains(dependency1));
+        assertTrue(toRemove.contains(dependency2));
+
+        final Collection<Object> allEntities = cloud.getAllEntities();
+        assertEquals(1, allEntities.size());
+        assertTrue(allEntities.contains(root));
+
+        final Collection<Object> rootEntities = cloud.getRootEntities();
+        assertEquals(1, rootEntities.size());
+        assertTrue(rootEntities.contains(root));
+
+        assertTrue(cloud.isRootEntity(root));
+        assertTrue(cloud.containsEntity(root));
+    }
 }
