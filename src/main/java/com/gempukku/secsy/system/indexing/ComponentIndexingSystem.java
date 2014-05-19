@@ -9,6 +9,8 @@ import com.gempukku.secsy.entity.event.BeforeComponentRemoved;
 import com.gempukku.secsy.entity.event.ComponentActivated;
 import com.gempukku.secsy.entity.event.ComponentAdded;
 import com.gempukku.secsy.entity.event.ComponentEvent;
+import com.gempukku.secsy.system.ClientSystem;
+import com.gempukku.secsy.system.ServerSystem;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
@@ -20,6 +22,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+@ServerSystem
+@ClientSystem
 public class ComponentIndexingSystem implements ComponentIndexingManager<Event>, EventListener<Event> {
     private Map<Set<Class<? extends Component>>, RealIndex> indices = new HashMap<>();
     private Multimap<RealIndex, IndexAccess> indexAccess = HashMultimap.create();

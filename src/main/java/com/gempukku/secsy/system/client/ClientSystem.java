@@ -3,6 +3,7 @@ package com.gempukku.secsy.system.client;
 import com.gempukku.secsy.EntityManager;
 import com.gempukku.secsy.EntityRef;
 import com.gempukku.secsy.EventListener;
+import com.gempukku.secsy.system.ServerSystem;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -11,6 +12,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+@ServerSystem
 public class ClientSystem<E> implements EventListener<E> {
     private EntityManager<E> entityManager;
     private Collection<Class<? extends E>> internalEntityStateEvents;
