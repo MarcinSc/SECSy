@@ -109,4 +109,22 @@ public class AnnotationDrivenProxyComponentFactoryTest {
         // Changes immediately visible
         assertEquals("value", copy.getValue());
     }
+
+    @Test
+    public void testFieldTypes() {
+        final SampleComponent original = factory.createComponent(SampleComponent.class, valueObject);
+        final Map<String, Class<?>> componentFields = original.getComponentFields();
+        assertEquals(1, componentFields.size());
+        assertEquals(String.class, componentFields.get("value"));
+    }
+
+    @Test
+    public void testGetFieldValue() {
+        final SampleComponent original = factory.createComponent(SampleComponent.class, valueObject);
+        assertNull(original.getComponentFieldValue("value", String.class));
+
+        original.setValue("value");
+
+        assertEquals("value", original.getComponentFieldValue("value", String.class));
+    }
 }
