@@ -6,19 +6,28 @@ import com.gempukku.secsy.component.ComponentFactory;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 public class AnnotationDrivenProxyComponentFactory implements ComponentFactory<Map<String, Object>> {
     private static final Object NULL_VALUE = new Object();
     private Method componentClassMethod;
+    private Method componentFieldsMethod;
+    private Method componentFieldValueMethod;
+    private Map<Class<? extends Component>, ComponentDef> componentDefinitions = new HashMap<>();
 
     public AnnotationDrivenProxyComponentFactory() throws NoSuchMethodException {
         componentClassMethod = Component.class.getMethod("getComponentClass", new Class<?>[0]);
+        componentFieldsMethod = Component.class.getMethod("getComponentFields", new Class<?>[0]);
+        componentFieldValueMethod = Component.class.getMethod("getComponentFieldValue", new Class<?>[] {String.class, Class.class});
     }
 
     @Override
     public <T extends Component> Map<String, Object> createComponentValueObject(Class<T> clazz) {
+        if (componentDefinitions.get(clazz) == null) {
+            componentDefinitions.put(clazz, new ComponentDef(clazz));
+        }
         return new HashMap<>();
     }
 
@@ -57,6 +66,48 @@ public class AnnotationDrivenProxyComponentFactory implements ComponentFactory<M
         return ((ComponentView) Proxy.getInvocationHandler(component)).isNewComponent();
     }
 
+    private class ComponentDef {
+        private Map<String, Class<?>> fieldTypes = new HashMap<>();
+
+        private ComponentDef(Class<? extends Component> clazz) {
+            for (Method method : clazz.getDeclaredMethods()) {
+                final GetProperty get = method.getAnnotation(GetProperty.class);
+                if (get != null) {
+                    final String fieldName = get.value();
+                    final Class<?> fieldType = method.getReturnType();
+
+                    final Class<?> existingType = fieldTypes.get(fieldName);
+                    if (existingType != null) {
+                        if (existingType != fieldType) {
+                            throw new IllegalStateException("Invalid component definition, field " + fieldName + " uses different value types");
+                        }
+                    } else {
+                        fieldTypes.put(fieldName, fieldType);
+                    }
+                }
+
+                final SetProperty set = method.getAnnotation(SetProperty.class);
+                if (set != null) {
+                    final String fieldName = set.value();
+                    final Class<?> fieldType = method.getParameterTypes()[0];
+
+                    final Class<?> existingType = fieldTypes.get(fieldName);
+                    if (existingType != null) {
+                        if (existingType != fieldType) {
+                            throw new IllegalStateException("Invalid component definition, field " + fieldName + " uses different value types");
+                        }
+                    } else {
+                        fieldTypes.put(fieldName, fieldType);
+                    }
+                }
+            }
+        }
+
+        private Map<String, Class<?>> getFieldTypes() {
+            return Collections.unmodifiableMap(fieldTypes);
+        }
+    }
+
     private class ComponentView implements InvocationHandler {
         private Class<? extends Component> clazz;
         private Map<String, Object> storedValues;
@@ -78,30 +129,35 @@ public class AnnotationDrivenProxyComponentFactory implements ComponentFactory<M
             if (method.equals(componentClassMethod)) {
                 return clazz;
             }
+            if (method.equals(componentFieldsMethod)) {
+                return componentDefinitions.get(clazz).getFieldTypes();
+            }
+            if (method.equals(componentFieldValueMethod)) {
+                return handleGet((String) args[0]);
+            }
 
             final GetProperty get = method.getAnnotation(GetProperty.class);
             if (get != null) {
-                return handleGet(get);
+                return handleGet(get.value());
             }
             final SetProperty set = method.getAnnotation(SetProperty.class);
             if (set != null) {
-                return handleSet(args[0], set);
+                return handleSet(args[0], set.value());
             }
             throw new UnsupportedOperationException("Component method invoked without property defined");
         }
 
-        private Object handleSet(Object arg, SetProperty set) {
+        private Object handleSet(Object arg, String fieldName) {
             if (arg == null) {
                 arg = NULL_VALUE;
             }
-            changes.put(set.value(), arg);
+            changes.put(fieldName, arg);
 
             return null;
         }
 
-        private Object handleGet(GetProperty get) {
-            final String propertyName = get.value();
-            final Object changedValue = changes.get(propertyName);
+        private Object handleGet(String fieldName) {
+            final Object changedValue = changes.get(fieldName);
             if (changedValue != null) {
                 if (changedValue == NULL_VALUE) {
                     return null;
@@ -109,7 +165,7 @@ public class AnnotationDrivenProxyComponentFactory implements ComponentFactory<M
                     return changedValue;
                 }
             } else {
-                return storedValues.get(propertyName);
+                return storedValues.get(fieldName);
             }
         }
     }

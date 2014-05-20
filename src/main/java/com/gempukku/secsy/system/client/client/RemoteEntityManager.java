@@ -1,6 +1,5 @@
 package com.gempukku.secsy.system.client.client;
 
-import com.gempukku.secsy.Component;
 import com.gempukku.secsy.EntityFactory;
 import com.gempukku.secsy.EntityManager;
 import com.gempukku.secsy.EntityRef;
@@ -8,15 +7,12 @@ import com.gempukku.secsy.Event;
 import com.gempukku.secsy.EventBus;
 import com.gempukku.secsy.SimpleEntityManager;
 import com.gempukku.secsy.entity.EntityStorage;
-import com.gempukku.secsy.entity.IgnoreStateListener;
 import com.gempukku.secsy.entity.NormalStateListener;
 import com.gempukku.secsy.entity.event.BeforeComponentRemoved;
 import com.gempukku.secsy.system.Share;
-import com.sun.org.apache.xerces.internal.impl.validation.*;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 @Share(EntityManager.class)
 public class RemoteEntityManager extends SimpleEntityManager implements ClientEventVisitor<Event> {
@@ -42,7 +38,7 @@ public class RemoteEntityManager extends SimpleEntityManager implements ClientEv
     }
 
     @Override
-    public void visitEntityUpdate(int entityId, EntityState<Event> entityState) {
+    public void visitEntityUpdate(int entityId, com.gempukku.secsy.entity.io.EntityState<Event> entityState) {
         Integer localId = remoteEntityToLocalMap.get(entityId);
         EntityRef<Event> entity;
         if (localId == null) {
