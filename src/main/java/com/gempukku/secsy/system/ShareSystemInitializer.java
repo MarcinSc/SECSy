@@ -55,4 +55,25 @@ public class ShareSystemInitializer<Event, S> implements SystemInitializer<S> {
             }
         }
     }
+
+    @Override
+    public void destroySystems(Collection<S> systems) {
+        for (S system : systems) {
+            if (system instanceof LifeCycleSystem) {
+                ((LifeCycleSystem) system).beforeDestroy();
+            }
+        }
+
+        for (S system : systems) {
+            if (system instanceof LifeCycleSystem) {
+                ((LifeCycleSystem) system).destroy();
+            }
+        }
+
+        for (S system : systems) {
+            if (system instanceof LifeCycleSystem) {
+                ((LifeCycleSystem) system).postDestroy();
+            }
+        }
+    }
 }

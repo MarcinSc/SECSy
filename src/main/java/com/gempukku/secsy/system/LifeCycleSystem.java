@@ -6,4 +6,10 @@ public interface LifeCycleSystem {
     public void initialize();
 
     public void postInitialize();
+
+    public void beforeDestroy();
+
+    public void destroy();
+
+    public void postDestroy();
 }

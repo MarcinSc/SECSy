@@ -1,5 +1,6 @@
 package com.gempukku.secsy.system.client;
 
+import com.gempukku.secsy.system.client.host.SimpleObjectCloud;
 import org.junit.Test;
 
 import java.util.Collection;

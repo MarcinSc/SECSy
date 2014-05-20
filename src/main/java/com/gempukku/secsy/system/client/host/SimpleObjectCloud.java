@@ -1,4 +1,6 @@
-package com.gempukku.secsy.system.client;
+package com.gempukku.secsy.system.client.host;
+
+import com.gempukku.secsy.system.client.BiDiMultimap;
 
 import java.util.Collection;
 import java.util.Collections;

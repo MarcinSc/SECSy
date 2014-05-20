@@ -1,7 +1,6 @@
-package com.gempukku.secsy.system.client;
+package com.gempukku.secsy.system.client.host;
 
 import com.gempukku.secsy.EntityRef;
-import com.google.common.collect.Multimap;
 
 import java.util.Collection;
 

@@ -4,12 +4,14 @@ import com.gempukku.secsy.entity.EntityListener;
 import com.gempukku.secsy.entity.EntityStorage;
 import com.gempukku.secsy.entity.NormalStateListener;
 import com.gempukku.secsy.entity.event.BeforeComponentRemoved;
+import com.gempukku.secsy.system.Share;
 
 import java.util.Collection;
 
 /**
  * @author Marcin Sciesinski <marcins78@gmail.com>
  */
+@Share(EntityManager.class)
 public class SimpleEntityManager implements EntityManager<Event> {
     private EventBus<Event> eventBus;
     private EntityFactory<Event> entityFactory;

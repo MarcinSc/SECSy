@@ -1,4 +1,4 @@
-package com.gempukku.secsy.system.client;
+package com.gempukku.secsy.system.client.host;
 
 import com.gempukku.secsy.EntityManager;
 import com.gempukku.secsy.EntityRef;

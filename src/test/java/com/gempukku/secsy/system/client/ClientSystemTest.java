@@ -4,6 +4,8 @@ import com.gempukku.secsy.EntityManager;
 import com.gempukku.secsy.EntityRef;
 import com.gempukku.secsy.Event;
 import com.gempukku.secsy.SampleEvent;
+import com.gempukku.secsy.system.client.host.Client;
+import com.gempukku.secsy.system.client.host.ClientSystem;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;

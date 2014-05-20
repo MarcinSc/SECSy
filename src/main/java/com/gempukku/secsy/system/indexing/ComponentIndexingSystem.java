@@ -9,6 +9,7 @@ import com.gempukku.secsy.entity.event.BeforeComponentRemoved;
 import com.gempukku.secsy.entity.event.ComponentActivated;
 import com.gempukku.secsy.entity.event.ComponentAdded;
 import com.gempukku.secsy.entity.event.ComponentEvent;
+import com.gempukku.secsy.system.DefaultLifeCycleSystem;
 import com.gempukku.secsy.system.Share;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -21,8 +22,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-@Share(value = ComponentIndexingManager.class)
-public class ComponentIndexingSystem implements ComponentIndexingManager<Event>, EventListener<Event> {
+@Share(ComponentIndexingManager.class)
+public class ComponentIndexingSystem extends DefaultLifeCycleSystem implements ComponentIndexingManager<Event>, EventListener<Event> {
     private Map<Set<Class<? extends Component>>, RealIndex> indices = new HashMap<>();
     private Multimap<RealIndex, IndexAccess> indexAccess = HashMultimap.create();
 
@@ -30,6 +31,11 @@ public class ComponentIndexingSystem implements ComponentIndexingManager<Event>,
     private Set<Class<? extends ComponentEvent>> removingEvents = new HashSet<>(Arrays.asList(BeforeComponentRemoved.class, BeforeComponentDeactivated.class));
 
     private boolean finishedRegistration;
+
+    @Override
+    public void postInitialize() {
+        finishIndexRegistration();
+    }
 
     public void finishIndexRegistration() {
         finishedRegistration = true;

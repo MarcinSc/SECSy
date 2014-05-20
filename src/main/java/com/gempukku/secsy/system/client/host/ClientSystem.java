@@ -1,8 +1,9 @@
-package com.gempukku.secsy.system.client;
+package com.gempukku.secsy.system.client.host;
 
 import com.gempukku.secsy.EntityManager;
 import com.gempukku.secsy.EntityRef;
 import com.gempukku.secsy.EventListener;
+import com.gempukku.secsy.system.In;
 import com.gempukku.secsy.system.Share;
 
 import java.util.Collection;
@@ -12,9 +13,11 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-@Share(value = ClientManager.class)
+@Share(ClientManager.class)
 public class ClientSystem<E> implements EventListener<E>, ClientManager<E> {
+    @In
     private EntityManager<E> entityManager;
+    
     private Collection<Class<? extends E>> internalEntityStateEvents;
 
     private Map<String, ClientConnection<E>> clientConnections = new HashMap<>();

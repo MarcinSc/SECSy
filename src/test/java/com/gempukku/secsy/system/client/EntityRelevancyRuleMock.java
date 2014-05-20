@@ -2,6 +2,7 @@ package com.gempukku.secsy.system.client;
 
 import com.gempukku.secsy.Component;
 import com.gempukku.secsy.EntityRef;
+import com.gempukku.secsy.system.client.host.EntityRelevancyRule;
 
 import java.util.Collection;
 import java.util.Collections;

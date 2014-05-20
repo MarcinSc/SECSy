@@ -1,6 +1,7 @@
 package com.gempukku.secsy.system.client;
 
 import com.gempukku.secsy.EntityRef;
+import com.gempukku.secsy.system.client.host.EventRelevancyRule;
 
 import java.util.HashMap;
 import java.util.Map;
