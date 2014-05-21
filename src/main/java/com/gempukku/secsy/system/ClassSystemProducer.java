@@ -3,10 +3,10 @@ package com.gempukku.secsy.system;
 import java.util.Collection;
 import java.util.HashSet;
 
-public class FixedSystemProducer<E> implements SystemProducer<E> {
+public class ClassSystemProducer<E> implements SystemProducer<E> {
     private Class<? extends E>[] systems;
 
-    public FixedSystemProducer(Class<? extends E>... systems) {
+    public ClassSystemProducer(Class<? extends E>... systems) {
         this.systems = systems;
     }
 
