@@ -12,10 +12,10 @@ public class CompositeSystemProducer<E> implements SystemProducer<E> {
     }
 
     @Override
-    public Collection<E> getSystems() {
+    public Collection<E> createSystems() {
         Set<E> result = new HashSet<>();
         for (SystemProducer<E> systemProducer : systemProducers) {
-            result.addAll(systemProducer.getSystems());
+            result.addAll(systemProducer.createSystems());
         }
 
         return result;

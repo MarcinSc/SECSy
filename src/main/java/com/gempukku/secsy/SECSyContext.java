@@ -19,7 +19,7 @@ public class SECSyContext<S, E> {
     }
 
     public void startup() {
-        systems = systemProducer.getSystems();
+        systems = systemProducer.createSystems();
         for (S system : systems) {
             if (system instanceof EventListener) {
                 eventBus.addEventListener((EventListener<E>) system);

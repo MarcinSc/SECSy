@@ -24,7 +24,7 @@ public class AnnotationDrivenSystemProducer implements SystemProducer<Object> {
     }
 
     @Override
-    public Collection<Object> getSystems() {
+    public Collection<Object> createSystems() {
         return Collections.unmodifiableCollection(systemsDetected);
     }
 }
