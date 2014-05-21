@@ -69,7 +69,7 @@ public class IsolationEntityFactory<E> implements EntityFactory<E> {
         @Override
         public synchronized void saveComponents(Component... components) {
             for (Component component : components) {
-                Class<? extends Component> clazz = component.getComponentClass();
+                Class<? extends Component> clazz = componentFactory.getComponentClass(component);
                 if (componentFactory.isNewComponent(component)) {
                     if (storedComponents.contains(clazz)) {
                         throw new IllegalStateException("This entity already contains a component of that class");
@@ -85,7 +85,7 @@ public class IsolationEntityFactory<E> implements EntityFactory<E> {
 
             for (Component component : components) {
                 if (componentFactory.isNewComponent(component)) {
-                    Class<? extends Component> clazz = component.getComponentClass();
+                    final Class<Component> clazz = componentFactory.getComponentClass(component);
                     final Object valueObject = componentValueObjects.get(clazz);
                     componentFactory.saveComponent(component, valueObject);
 
@@ -102,7 +102,7 @@ public class IsolationEntityFactory<E> implements EntityFactory<E> {
 
             for (Component component : components) {
                 if (!componentFactory.isNewComponent(component)) {
-                    Class<? extends Component> clazz = component.getComponentClass();
+                    final Class<Component> clazz = componentFactory.getComponentClass(component);
                     final Object valueObject = componentValueObjects.get(clazz);
                     componentFactory.saveComponent(component, valueObject);
 

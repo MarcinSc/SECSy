@@ -31,7 +31,7 @@ public class AnnotationDrivenProxyComponentFactoryTest {
     @Test
     public void testGetComponentClass() {
         final SampleComponent component = factory.createComponent(SampleComponent.class, valueObject);
-        assertEquals(SampleComponent.class, component.getComponentClass());
+        assertEquals(SampleComponent.class, factory.getComponentClass(component));
     }
 
     @Test

@@ -36,20 +36,8 @@ public class IsolationEntityFactoryTest {
         entityListener = Mockito.mock(EntityListener.class);
         SampleComponent createdComponent = Mockito.mock(SampleComponent.class);
         SampleComponent gotComponent = Mockito.mock(SampleComponent.class);
-        Mockito.when(createdComponent.getComponentClass()).thenAnswer(
-                new Answer<Class<? extends Component>>() {
-                    @Override
-                    public Class<? extends Component> answer(InvocationOnMock invocationOnMock) throws Throwable {
-                        return SampleComponent.class;
-                    }
-                });
-        Mockito.when(gotComponent.getComponentClass()).thenAnswer(
-                new Answer<Class<? extends Component>>() {
-                    @Override
-                    public Class<? extends Component> answer(InvocationOnMock invocationOnMock) throws Throwable {
-                        return SampleComponent.class;
-                    }
-                });
+        Mockito.when(componentFactory.getComponentClass(createdComponent)).thenReturn(SampleComponent.class);
+        Mockito.when(componentFactory.getComponentClass(gotComponent)).thenReturn(SampleComponent.class);
         Mockito.when(componentFactory.createComponentValueObject(SampleComponent.class)).thenReturn(valueObject);
         Mockito.when(componentFactory.createComponent(SampleComponent.class, valueObject)).thenReturn(createdComponent);
         Mockito.when(componentFactory.getComponent(SampleComponent.class, valueObject)).thenReturn(gotComponent);
@@ -173,6 +161,7 @@ public class IsolationEntityFactoryTest {
         Mockito.verifyNoMoreInteractions(entityListener, componentFactory);
         entity.saveComponents(component);
         Mockito.verify(componentFactory, Mockito.atLeast(0)).isNewComponent(Mockito.any(SampleComponent.class));
+        Mockito.verify(componentFactory, Mockito.atLeast(0)).getComponentClass(component);
         Mockito.verify(entityListener).afterComponentAdded(Mockito.same(entity), Mockito.argThat(new SampleComponentMatcher()));
         Mockito.verify(componentFactory).saveComponent(component, valueObject);
         Mockito.verifyNoMoreInteractions(entityListener, componentFactory);
@@ -185,6 +174,7 @@ public class IsolationEntityFactoryTest {
         entity.saveComponents(component);
 
         Mockito.verify(componentFactory, Mockito.atLeast(0)).isNewComponent(component);
+        Mockito.verify(componentFactory, Mockito.atLeast(0)).getComponentClass(component);
         Mockito.verify(componentFactory).createComponentValueObject(SampleComponent.class);
         Mockito.verify(componentFactory).createComponent(SampleComponent.class, valueObject);
         Mockito.verify(entityListener).afterComponentAdded(Mockito.same(entity), Mockito.argThat(new SampleComponentMatcher()));
@@ -195,6 +185,7 @@ public class IsolationEntityFactoryTest {
         entity.saveComponents(copy);
 
         Mockito.verify(componentFactory, Mockito.atLeast(0)).isNewComponent(copy);
+        Mockito.verify(componentFactory, Mockito.atLeast(0)).getComponentClass(copy);
         Mockito.verify(entityListener).afterComponentUpdated(Mockito.same(entity), Mockito.argThat(new SampleComponentMatcher()));
         Mockito.verify(componentFactory).getComponent(SampleComponent.class, valueObject);
         Mockito.verify(componentFactory).saveComponent(copy, valueObject);

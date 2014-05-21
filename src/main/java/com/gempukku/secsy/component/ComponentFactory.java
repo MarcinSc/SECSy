@@ -17,4 +17,6 @@ public interface ComponentFactory<O> {
     public <T extends Component> void saveComponent(T component, O valueObject);
 
     public <T extends Component> boolean isNewComponent(T component);
+
+    public <T extends Component> Class<T> getComponentClass(T component);
 }

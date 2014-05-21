@@ -12,13 +12,11 @@ import java.util.Map;
 
 public class AnnotationDrivenProxyComponentFactory implements ComponentFactory<Map<String, Object>> {
     private static final Object NULL_VALUE = new Object();
-    private Method componentClassMethod;
     private Method componentFieldsMethod;
     private Method componentFieldValueMethod;
     private Map<Class<? extends Component>, ComponentDef> componentDefinitions = new HashMap<>();
 
     public AnnotationDrivenProxyComponentFactory() throws NoSuchMethodException {
-        componentClassMethod = Component.class.getMethod("getComponentClass", new Class<?>[0]);
         componentFieldsMethod = Component.class.getMethod("getComponentFields", new Class<?>[0]);
         componentFieldValueMethod = Component.class.getMethod("getComponentFieldValue", new Class<?>[] {String.class, Class.class});
     }
@@ -64,6 +62,11 @@ public class AnnotationDrivenProxyComponentFactory implements ComponentFactory<M
     @Override
     public <T extends Component> boolean isNewComponent(T component) {
         return ((ComponentView) Proxy.getInvocationHandler(component)).isNewComponent();
+    }
+
+    @Override
+    public <T extends Component> Class<T> getComponentClass(T component) {
+        return (Class<T>) ((ComponentView) Proxy.getInvocationHandler(component)).clazz;
     }
 
     private class ComponentDef {
@@ -126,9 +129,6 @@ public class AnnotationDrivenProxyComponentFactory implements ComponentFactory<M
 
         @Override
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            if (method.equals(componentClassMethod)) {
-                return clazz;
-            }
             if (method.equals(componentFieldsMethod)) {
                 return componentDefinitions.get(clazz).getFieldTypes();
             }
