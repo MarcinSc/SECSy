@@ -43,4 +43,9 @@ public class NullEntityRefTest {
     public void sentEvent() {
         NullEntityRef.singleton.send(new Object());
     }
+
+    @Test
+    public void hasComponent() {
+        assertFalse(NullEntityRef.singleton.hasComponent(SampleComponent.class));
+    }
 }

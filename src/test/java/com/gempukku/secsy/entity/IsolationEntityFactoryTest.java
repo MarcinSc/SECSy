@@ -83,6 +83,16 @@ public class IsolationEntityFactoryTest {
     }
 
     @Test
+    public void hasComponent() {
+        final EntityRef entity = factory.createEntity(entityListener);
+        assertFalse(entity.hasComponent(SampleComponent.class));
+        final Component component = entity.addComponent(SampleComponent.class);
+        assertFalse(entity.hasComponent(SampleComponent.class));
+        entity.saveComponents(component);
+        assertTrue(entity.hasComponent(SampleComponent.class));
+    }
+
+    @Test
     public void listComponents() {
         final EntityRef entity = factory.createEntity(entityListener);
         assertTrue(entity.listComponents().isEmpty());

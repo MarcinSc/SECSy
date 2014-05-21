@@ -37,7 +37,7 @@ public class ComponentIndexingSystemTest {
         sampleComponent1Index = system.createIndex(SampleComponent.class);
         sampleComponent2Index = system.createIndex(SampleComponent2.class);
         sampleComponentBothIndex = system.createIndex(SampleComponent.class, SampleComponent2.class);
-        system.finishIndexRegistration();
+        system.postInitialize();
 
         entity = Mockito.mock(EntityRef.class);
     }
