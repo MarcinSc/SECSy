@@ -68,12 +68,12 @@ public class EntityRelevancyRuleMock<E> implements EntityRelevancyRule<E> {
     }
 
     @Override
-    public boolean isComponentRelevant(EntityRef<E> clientEntity, EntityRef<E> entity, Component component) {
+    public boolean isComponentRelevant(EntityRef<E> clientEntity, EntityRef<E> entity, Class<? extends Component> component) {
         return false;
     }
 
     @Override
-    public boolean isComponentFieldRelevant(EntityRef<E> clientEntity, EntityRef<E> entity, Component component, String field) {
+    public boolean isComponentFieldRelevant(EntityRef<E> clientEntity, EntityRef<E> entity, Class<? extends Component> component, String field) {
         return false;
     }
 }
