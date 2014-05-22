@@ -4,6 +4,9 @@ import com.gempukku.secsy.entity.EntityListener;
 import com.gempukku.secsy.entity.EntityStorage;
 import com.gempukku.secsy.entity.NormalStateListener;
 import com.gempukku.secsy.entity.event.BeforeComponentRemoved;
+import com.gempukku.secsy.system.DefaultLifeCycleSystem;
+import com.gempukku.secsy.system.In;
+import com.gempukku.secsy.system.LifeCycleSystem;
 import com.gempukku.secsy.system.Share;
 
 import java.util.Collection;
@@ -12,16 +15,26 @@ import java.util.Collection;
  * @author Marcin Sciesinski <marcins78@gmail.com>
  */
 @Share(EntityManager.class)
-public class SimpleEntityManager implements EntityManager<Event> {
+public class SimpleEntityManager extends DefaultLifeCycleSystem implements EntityManager<Event> {
+    @In
     private EventBus<Event> eventBus;
+    @In
     private EntityFactory<Event> entityFactory;
+    @In
     private EntityStorage<Event> entityStorage;
     private EntityListener<Event> normalStateListener;
 
+    public SimpleEntityManager() {
+    }
+
     public SimpleEntityManager(EventBus<Event> eventBus, EntityFactory<Event> entityFactory, EntityStorage<Event> entityStorage) {
-        this.eventBus = eventBus;
         this.entityFactory = entityFactory;
         this.entityStorage = entityStorage;
+        this.eventBus = eventBus;
+    }
+
+    @Override
+    public void postInitialize() {
         normalStateListener = new NormalStateListener(eventBus);
     }
 

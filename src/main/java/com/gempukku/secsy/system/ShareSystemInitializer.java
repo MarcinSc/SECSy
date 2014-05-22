@@ -22,16 +22,12 @@ public class ShareSystemInitializer<Event, S> implements SystemInitializer<S> {
 
         // Enrich systems with shared components
         for (S system : systems) {
-            for (Field field : system.getClass().getFields()) {
-                final In in = field.getAnnotation(In.class);
-                if (in != null) {
-                    final Object value = context.get(field.getType());
-                    field.setAccessible(true);
-                    try {
-                        field.set(system, value);
-                    } catch (IllegalAccessException e) {
-                        throw new RuntimeException(e);
-                    }
+            Class<? extends Object> systemClass = system.getClass();
+            while (true) {
+                initForClass(context, system, systemClass);
+                systemClass = systemClass.getSuperclass();
+                if (systemClass == Object.class) {
+                    break;
                 }
             }
         }
@@ -52,6 +48,21 @@ public class ShareSystemInitializer<Event, S> implements SystemInitializer<S> {
         for (S system : systems) {
             if (system instanceof LifeCycleSystem) {
                 ((LifeCycleSystem) system).postInitialize();
+            }
+        }
+    }
+
+    private void initForClass(Map<Class<?>, Object> context, S system, Class<? extends Object> systemClass) {
+        for (Field field : systemClass.getFields()) {
+            final In in = field.getAnnotation(In.class);
+            if (in != null) {
+                final Object value = context.get(field.getType());
+                field.setAccessible(true);
+                try {
+                    field.set(system, value);
+                } catch (IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
             }
         }
     }

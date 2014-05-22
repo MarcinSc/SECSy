@@ -3,10 +3,12 @@ package com.gempukku.secsy.bus;
 import com.gempukku.secsy.EntityRef;
 import com.gempukku.secsy.EventBus;
 import com.gempukku.secsy.EventListener;
+import com.gempukku.secsy.system.Share;
 
 import java.util.LinkedList;
 import java.util.List;
 
+@Share(EventBus.class)
 public class SimpleEventBus<E> implements EventBus<E> {
     private List<EventListener<E>> eventListeners = new LinkedList<>();
 

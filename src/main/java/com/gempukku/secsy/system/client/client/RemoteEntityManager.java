@@ -9,6 +9,7 @@ import com.gempukku.secsy.SimpleEntityManager;
 import com.gempukku.secsy.entity.EntityStorage;
 import com.gempukku.secsy.entity.NormalStateListener;
 import com.gempukku.secsy.entity.event.BeforeComponentRemoved;
+import com.gempukku.secsy.system.In;
 import com.gempukku.secsy.system.Share;
 
 import java.util.HashMap;
@@ -16,13 +17,20 @@ import java.util.Map;
 
 @Share(EntityManager.class)
 public class RemoteEntityManager extends SimpleEntityManager implements ClientEventVisitor<Event> {
+    @In
     private EventBus<Event> eventBus;
+    @In
     private EntityFactory<Event> entityFactory;
+    @In
     private EntityStorage<Event> entityStorage;
+    @In
     private ClientEventQueue<Event> clientEventQueue;
 
     private Map<Integer, Integer> remoteEntityToLocalMap = new HashMap<>();
     private Map<Integer, Integer> localEntityToRemoveMap = new HashMap<>();
+
+    public RemoteEntityManager() {
+    }
 
     public RemoteEntityManager(EventBus<Event> eventBus, EntityFactory<Event> entityFactory, EntityStorage<Event> entityStorage,
                                ClientEventQueue<Event> clientEventQueue) {

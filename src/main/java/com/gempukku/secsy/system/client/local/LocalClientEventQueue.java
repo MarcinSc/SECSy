@@ -3,6 +3,8 @@ package com.gempukku.secsy.system.client.local;
 import com.gempukku.secsy.EntityRef;
 import com.gempukku.secsy.entity.io.EntitySerializer;
 import com.gempukku.secsy.event.EventSerializer;
+import com.gempukku.secsy.system.In;
+import com.gempukku.secsy.system.Share;
 import com.gempukku.secsy.system.client.client.ClientEventQueue;
 import com.gempukku.secsy.system.client.client.ClientEventVisitor;
 import com.gempukku.secsy.system.client.host.Client;
@@ -15,10 +17,17 @@ import java.util.Collection;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+@Share(ClientEventQueue.class)
 public class LocalClientEventQueue<E> implements ClientEventQueue<E>, Client<E> {
-    private Queue<ClientEvent> eventQueue = new ConcurrentLinkedQueue<>();
+    @In
     private EntitySerializer<E> entitySerializer;
+    @In
     private EventSerializer<E> eventSerializer;
+
+    private Queue<ClientEvent> eventQueue = new ConcurrentLinkedQueue<>();
+
+    public LocalClientEventQueue() {
+    }
 
     public LocalClientEventQueue(EntitySerializer<E> entitySerializer, EventSerializer<E> eventSerializer) {
         this.entitySerializer = entitySerializer;
