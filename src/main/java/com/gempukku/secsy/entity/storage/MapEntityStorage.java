@@ -38,6 +38,11 @@ public class MapEntityStorage<E> implements EntityStorage<E> {
     }
 
     @Override
+    public boolean hasEntity(EntityRef<E> entity) {
+        return entityIds.containsKey(entity);
+    }
+
+    @Override
     public int getEntityId(EntityRef<E> entity) {
         return entityIds.get(entity);
     }

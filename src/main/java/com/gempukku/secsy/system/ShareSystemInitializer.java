@@ -1,13 +1,16 @@
 package com.gempukku.secsy.system;
 
+import com.gempukku.secsy.EventBus;
+import com.gempukku.secsy.EventListener;
+
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ShareSystemInitializer<Event, S> implements SystemInitializer<S> {
+public class ShareSystemInitializer<E, S> implements SystemInitializer<S> {
     @Override
-    public void initializeSystems(Collection<S> systems) {
+    public SystemContext initializeSystems(Collection<S> systems) {
         Map<Class<?>, Object> context = new HashMap<>();
 
         // Figure out shared objects
@@ -17,6 +20,14 @@ public class ShareSystemInitializer<Event, S> implements SystemInitializer<S> {
                 for (Class<?> clazz : shared.value()) {
                     context.put(clazz, system);
                 }
+            }
+        }
+
+        final EventBus<E> eventBus = (EventBus<E>) context.get(EventBus.class);
+
+        for (S system : systems) {
+            if (system instanceof EventListener) {
+                eventBus.addEventListener((EventListener<E>) system);
             }
         }
 
@@ -31,6 +42,8 @@ public class ShareSystemInitializer<Event, S> implements SystemInitializer<S> {
                 }
             }
         }
+
+        return new SimpleSystemContext(context);
     }
 
     private void initForClass(Map<Class<?>, Object> context, S system, Class<? extends Object> systemClass) {
@@ -49,6 +62,12 @@ public class ShareSystemInitializer<Event, S> implements SystemInitializer<S> {
     }
 
     @Override
-    public void destroySystems(Collection<S> systems) {
+    public void destroySystems(SystemContext systemContext, Collection<S> systems) {
+        final EventBus eventBus = systemContext.getSystem(EventBus.class);
+        for (S system : systems) {
+            if (system instanceof EventListener) {
+                eventBus.removeEventListener((EventListener<E>) system);
+            }
+        }
     }
 }

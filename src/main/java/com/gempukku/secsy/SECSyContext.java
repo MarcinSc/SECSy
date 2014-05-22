@@ -1,6 +1,7 @@
 package com.gempukku.secsy;
 
 import com.gempukku.secsy.system.LifeCycleSystem;
+import com.gempukku.secsy.system.SystemContext;
 import com.gempukku.secsy.system.SystemInitializer;
 import com.gempukku.secsy.system.SystemProducer;
 
@@ -11,30 +12,26 @@ import java.util.List;
 public class SECSyContext<S, E> {
     private SystemProducer<S> systemProducer;
     private SystemInitializer<S> systemInitializer;
-    private EventBus<E> eventBus;
 
     private List<LifeCycleSystem> lifeCycleSystems = new LinkedList<>();
 
     private Collection<S> systems;
+    private SystemContext systemContext;
 
-    public SECSyContext(SystemProducer<S> systemProducer, SystemInitializer<S> systemInitializer, EventBus<E> eventBus) {
+    public SECSyContext(SystemProducer<S> systemProducer, SystemInitializer<S> systemInitializer) {
         this.systemProducer = systemProducer;
         this.systemInitializer = systemInitializer;
-        this.eventBus = eventBus;
     }
 
     public void startup() {
         systems = systemProducer.createSystems();
         for (S system : systems) {
-            if (system instanceof EventListener) {
-                eventBus.addEventListener((EventListener<E>) system);
-            }
             if (system instanceof LifeCycleSystem) {
                 lifeCycleSystems.add((LifeCycleSystem) system);
             }
         }
 
-        systemInitializer.initializeSystems(systems);
+        systemContext = systemInitializer.initializeSystems(systems);
 
         for (LifeCycleSystem lifeCycleSystem : lifeCycleSystems) {
             lifeCycleSystem.preInitialize();
@@ -70,12 +67,6 @@ public class SECSyContext<S, E> {
             lifeCycleSystem.postDestroy();
         }
 
-        systemInitializer.destroySystems(systems);
-
-        for (S system : systems) {
-            if (system instanceof EventListener) {
-                eventBus.removeEventListener((EventListener<E>) system);
-            }
-        }
+        systemInitializer.destroySystems(systemContext, systems);
     }
 }

@@ -5,7 +5,7 @@ import com.gempukku.secsy.EntityRef;
 import java.util.Collection;
 
 public interface ClientManager<E> {
-    public void addClient(String clientId, EntityRef<E> clientEntity, Client<E> client);
+    public ClientCallback<E> addClient(String clientId, EntityRef<E> clientEntity, Client<E> client);
 
     public void removeClient(String clientId);
 

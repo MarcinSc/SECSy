@@ -1,13 +1,16 @@
 package com.gempukku.secsy.system.client.local;
 
 import com.gempukku.secsy.EntityRef;
+import com.gempukku.secsy.EventBus;
+import com.gempukku.secsy.EventListener;
+import com.gempukku.secsy.bus.SimpleEventBus;
 import com.gempukku.secsy.entity.io.EntitySerializer;
 import com.gempukku.secsy.event.EventSerializer;
 import com.gempukku.secsy.system.In;
 import com.gempukku.secsy.system.Share;
 import com.gempukku.secsy.system.client.client.ClientEventQueue;
-import com.gempukku.secsy.system.client.client.ClientEventVisitor;
 import com.gempukku.secsy.system.client.host.Client;
+import com.gempukku.secsy.system.client.host.ClientCallback;
 import com.gempukku.secsy.system.client.host.CompositeEntityComponentFieldFilter;
 import com.gempukku.secsy.system.client.host.EntityComponentFieldFilter;
 
@@ -20,14 +23,16 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 @Share(ClientEventQueue.class)
-public class LocalClientEventQueue<E> implements ClientEventQueue<E>, Client<E> {
+public class LocalClientEventQueue<E> implements ClientEventQueue<E>, Client<E>, EventBus<E> {
     @In
     private EntitySerializer<E> entitySerializer;
     @In
     private EventSerializer<E> eventSerializer;
 
+    private EventBus<E> eventBus = new SimpleEventBus<>();
     private Queue<ClientEvent> eventQueue = new ConcurrentLinkedQueue<>();
     private List<ClientEvent> updateQueue = new LinkedList<>();
+    private ClientCallback<E> clientCallback;
 
     public LocalClientEventQueue() {
     }
@@ -35,6 +40,31 @@ public class LocalClientEventQueue<E> implements ClientEventQueue<E>, Client<E> 
     public LocalClientEventQueue(EntitySerializer<E> entitySerializer, EventSerializer<E> eventSerializer) {
         this.entitySerializer = entitySerializer;
         this.eventSerializer = eventSerializer;
+    }
+
+    @Override
+    public void addEventListener(EventListener<E> eventListener) {
+        eventBus.addEventListener(eventListener);
+    }
+
+    @Override
+    public void removeEventListener(EventListener<E> eventListener) {
+        eventBus.removeEventListener(eventListener);
+    }
+
+    @Override
+    public void sendEvent(EntityRef<E> entity, E event) {
+        eventBus.sendEvent(entity, event);
+    }
+
+    @Override
+    public void sendServerEvent(int entityId, E event) {
+        clientCallback.sendEvent(entityId, event);
+    }
+
+    @Override
+    public void setClientCallback(ClientCallback<E> clientCallback) {
+        this.clientCallback = clientCallback;
     }
 
     @Override
@@ -100,6 +130,16 @@ public class LocalClientEventQueue<E> implements ClientEventQueue<E>, Client<E> 
             } else {
                 visitor.visitEventSend(entityId, eventSerializer.deserializeEvent(new ByteArrayInputStream(binaryData)));
             }
+        }
+    }
+
+    private class ServerEvent {
+        private int entityId;
+        private E event;
+
+        private ServerEvent(int entityId, E event) {
+            this.entityId = entityId;
+            this.event = event;
         }
     }
 }

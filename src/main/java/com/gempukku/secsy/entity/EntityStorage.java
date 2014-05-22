@@ -9,6 +9,8 @@ public interface EntityStorage<E> {
 
     void removeEntity(EntityRef<E> entity);
 
+    boolean hasEntity(EntityRef<E> entity);
+
     int getEntityId(EntityRef<E> entity);
 
     EntityRef<E> getEntityById(int id);

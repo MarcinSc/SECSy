@@ -5,6 +5,7 @@ import com.gempukku.secsy.EntityManager;
 import com.gempukku.secsy.EntityRef;
 import com.gempukku.secsy.Event;
 import com.gempukku.secsy.EventBus;
+import com.gempukku.secsy.EventListener;
 import com.gempukku.secsy.SimpleEntityManager;
 import com.gempukku.secsy.entity.EntityStorage;
 import com.gempukku.secsy.entity.NormalStateListener;
@@ -16,7 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Share(EntityManager.class)
-public class RemoteEntityManager extends SimpleEntityManager implements ClientEventVisitor<Event> {
+public class RemoteEntityManager extends SimpleEntityManager implements ClientEventQueue.ClientEventVisitor<Event>, EventListener<Event> {
     @In
     private EventBus<Event> eventBus;
     @In
@@ -43,6 +44,16 @@ public class RemoteEntityManager extends SimpleEntityManager implements ClientEv
 
     public void processAwaitingMessages() {
         clientEventQueue.visitQueuedEvents(this);
+    }
+
+    @Override
+    public void eventReceived(EntityRef<Event> entity, Event event) {
+        if (entityStorage.hasEntity(entity)) {
+            final int localId = entityStorage.getEntityId(entity);
+            final Integer remoteId = localEntityToRemoveMap.get(localId);
+
+            clientEventQueue.sendServerEvent(remoteId, event);
+        }
     }
 
     @Override

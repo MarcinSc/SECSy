@@ -2,6 +2,7 @@ package com.gempukku.secsy.system.client.host;
 
 import com.gempukku.secsy.EntityManager;
 import com.gempukku.secsy.EntityRef;
+import com.gempukku.secsy.EventBus;
 import com.gempukku.secsy.EventListener;
 import com.gempukku.secsy.system.DefaultLifeCycleSystem;
 import com.gempukku.secsy.system.In;
@@ -12,19 +13,23 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 @Share(ClientManager.class)
-public class ClientSystem<E> extends DefaultLifeCycleSystem implements EventListener<E>, ClientManager<E> {
+public class ClientSystem<E> extends DefaultLifeCycleSystem implements EventListener<E>, ClientManager<E>, ClientCallback<E> {
     @In
     private EntityManager<E> entityManager;
-    
+
     private Collection<Class<? extends E>> internalEntityStateEvents;
 
     private Map<String, ClientConnection<E>> clientConnections = new HashMap<>();
 
     private Set<EntityRelevancyRule<E>> entityRelevancyRules = new HashSet<>();
     private Set<EventRelevancyRule<E>> eventRelevancyRules = new HashSet<>();
+
+    private Queue<EntityEvent> clientIncomingEvents = new ConcurrentLinkedQueue<>();
 
     public void setEntityManager(EntityManager<E> entityManager) {
         this.entityManager = entityManager;
@@ -34,11 +39,18 @@ public class ClientSystem<E> extends DefaultLifeCycleSystem implements EventList
         this.internalEntityStateEvents = internalEntityStateEvents;
     }
 
-    public void addClient(String clientId, EntityRef<E> clientEntity, Client<E> client) {
+    public ClientCallback<E> addClient(String clientId, EntityRef<E> clientEntity, Client<E> client) {
         final ClientConnection<E> clientConnection = new ClientConnection<E>(client, clientEntity);
         clientConnection.addEntityRelevancyRules(entityManager, entityRelevancyRules);
 
         clientConnections.put(clientId, clientConnection);
+
+        return this;
+    }
+
+    @Override
+    public void sendEvent(int entityId, E event) {
+        clientIncomingEvents.add(new EntityEvent(entityId, event));
     }
 
     public void removeClient(String clientId) {
@@ -78,6 +90,20 @@ public class ClientSystem<E> extends DefaultLifeCycleSystem implements EventList
 
     public void removeEventRelevancyRule(EventRelevancyRule<E> eventRelevancyRule) {
         eventRelevancyRules.remove(eventRelevancyRule);
+    }
+
+    @Override
+    public void update(long delta) {
+        while (true) {
+        final EntityEvent event = clientIncomingEvents.poll();
+            if (event == null) {
+                break;
+            }
+            final EntityRef<E> entity = entityManager.getEntityById(event.entityId);
+            if (entity != null) {
+                entity.send(event.event);
+            }
+        }
     }
 
     @Override
@@ -129,5 +155,15 @@ public class ClientSystem<E> extends DefaultLifeCycleSystem implements EventList
 
     private boolean isInternalEntityStateEvent(E event) {
         return internalEntityStateEvents.contains(event.getClass());
+    }
+
+    private class EntityEvent {
+        private int entityId;
+        private E event;
+
+        private EntityEvent(int entityId, E event) {
+            this.entityId = entityId;
+            this.event = event;
+        }
     }
 }
