@@ -64,7 +64,7 @@ public class LocalClientEventQueue<E> implements ClientEventQueue<E>, Client<E>,
 
     @Override
     public void setClientCallback(ClientCallback<E> clientCallback) {
-        this.clientCallback = clientCallback;
+        this.clientCallback = new LocalClientCallback<>(clientCallback, eventSerializer);
     }
 
     @Override
@@ -130,16 +130,6 @@ public class LocalClientEventQueue<E> implements ClientEventQueue<E>, Client<E>,
             } else {
                 visitor.visitEventSend(entityId, eventSerializer.deserializeEvent(new ByteArrayInputStream(binaryData)));
             }
-        }
-    }
-
-    private class ServerEvent {
-        private int entityId;
-        private E event;
-
-        private ServerEvent(int entityId, E event) {
-            this.entityId = entityId;
-            this.event = event;
         }
     }
 }
