@@ -26,7 +26,7 @@ public class DefaultLifeCycleSystem implements LifeCycleSystem {
     }
 
     @Override
-    public void beforeDestroy() {
+    public void preDestroy() {
     }
 
     @Override

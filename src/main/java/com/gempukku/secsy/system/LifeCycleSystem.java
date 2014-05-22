@@ -13,7 +13,7 @@ public interface LifeCycleSystem {
 
     public void postUpdate();
 
-    public void beforeDestroy();
+    public void preDestroy();
 
     public void destroy();
 

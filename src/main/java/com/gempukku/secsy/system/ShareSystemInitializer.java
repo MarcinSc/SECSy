@@ -31,25 +31,6 @@ public class ShareSystemInitializer<Event, S> implements SystemInitializer<S> {
                 }
             }
         }
-
-        // Initialization of LifeCycleSystems
-        for (S system : systems) {
-            if (system instanceof LifeCycleSystem) {
-                ((LifeCycleSystem) system).preInitialize();
-            }
-        }
-
-        for (S system : systems) {
-            if (system instanceof LifeCycleSystem) {
-                ((LifeCycleSystem) system).initialize();
-            }
-        }
-
-        for (S system : systems) {
-            if (system instanceof LifeCycleSystem) {
-                ((LifeCycleSystem) system).postInitialize();
-            }
-        }
     }
 
     private void initForClass(Map<Class<?>, Object> context, S system, Class<? extends Object> systemClass) {
@@ -69,22 +50,5 @@ public class ShareSystemInitializer<Event, S> implements SystemInitializer<S> {
 
     @Override
     public void destroySystems(Collection<S> systems) {
-        for (S system : systems) {
-            if (system instanceof LifeCycleSystem) {
-                ((LifeCycleSystem) system).beforeDestroy();
-            }
-        }
-
-        for (S system : systems) {
-            if (system instanceof LifeCycleSystem) {
-                ((LifeCycleSystem) system).destroy();
-            }
-        }
-
-        for (S system : systems) {
-            if (system instanceof LifeCycleSystem) {
-                ((LifeCycleSystem) system).postDestroy();
-            }
-        }
     }
 }
