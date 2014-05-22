@@ -7,6 +7,7 @@ import com.gempukku.secsy.EventListener;
 import com.gempukku.secsy.system.DefaultLifeCycleSystem;
 import com.gempukku.secsy.system.In;
 import com.gempukku.secsy.system.Share;
+import com.gempukku.secsy.system.client.ContextEventFilter;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -21,6 +22,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class ClientSystem<E> extends DefaultLifeCycleSystem implements EventListener<E>, ClientManager<E>, ClientCallback<E> {
     @In
     private EntityManager<E> entityManager;
+    @In
+    private ContextEventFilter<E> contextEventFilter;
 
     private Collection<Class<? extends E>> internalEntityStateEvents;
 
@@ -125,7 +128,7 @@ public class ClientSystem<E> extends DefaultLifeCycleSystem implements EventList
                     clientConnection.entityStateChanged(entityManager, entity);
                 }
             }
-        } else {
+        } else if (contextEventFilter.isToClientEvent(event)) {
             final int entityId = entityManager.getEntityId(entity);
 
             // Send the event to any clients tracking that entity if it is relevant for those client

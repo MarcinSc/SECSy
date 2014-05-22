@@ -8,6 +8,7 @@ import com.gempukku.secsy.entity.io.EntitySerializer;
 import com.gempukku.secsy.event.EventSerializer;
 import com.gempukku.secsy.system.In;
 import com.gempukku.secsy.system.Share;
+import com.gempukku.secsy.system.client.ContextEventFilter;
 import com.gempukku.secsy.system.client.client.ClientEventQueue;
 import com.gempukku.secsy.system.client.host.Client;
 import com.gempukku.secsy.system.client.host.ClientCallback;
@@ -28,6 +29,8 @@ public class LocalClientEventQueue<E> implements ClientEventQueue<E>, Client<E>,
     private EntitySerializer<E> entitySerializer;
     @In
     private EventSerializer<E> eventSerializer;
+    @In
+    private ContextEventFilter<E> contextEventFilter;
 
     private EventBus<E> eventBus = new SimpleEventBus<>();
     private Queue<ClientEvent> eventQueue = new ConcurrentLinkedQueue<>();
@@ -59,7 +62,9 @@ public class LocalClientEventQueue<E> implements ClientEventQueue<E>, Client<E>,
 
     @Override
     public void sendServerEvent(int entityId, E event) {
-        clientCallback.sendEvent(entityId, event);
+        if (contextEventFilter.isToServerEvent(event)) {
+            clientCallback.sendEvent(entityId, event);
+        }
     }
 
     @Override
