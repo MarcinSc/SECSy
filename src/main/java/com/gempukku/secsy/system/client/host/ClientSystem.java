@@ -42,6 +42,10 @@ public class ClientSystem<E> extends DefaultLifeCycleSystem implements EventList
         this.internalEntityStateEvents = internalEntityStateEvents;
     }
 
+    public void setContextEventFilter(ContextEventFilter<E> contextEventFilter) {
+        this.contextEventFilter = contextEventFilter;
+    }
+
     public ClientCallback<E> addClient(String clientId, EntityRef<E> clientEntity, Client<E> client) {
         final ClientConnection<E> clientConnection = new ClientConnection<E>(client, clientEntity);
         clientConnection.addEntityRelevancyRules(entityManager, entityRelevancyRules);

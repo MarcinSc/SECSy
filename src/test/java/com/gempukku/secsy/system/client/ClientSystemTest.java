@@ -46,9 +46,13 @@ public class ClientSystemTest {
         Mockito.when(entityManager.getEntityById(1)).thenReturn(entity1);
         Mockito.when(entityManager.getEntityById(2)).thenReturn(entity2);
 
+        ContextEventFilter contextEventFilter = Mockito.mock(ContextEventFilter.class);
+        Mockito.when(contextEventFilter.isToClientEvent(Mockito.any())).thenReturn(true);
+
         clientSystem = new ClientSystem<>();
         clientSystem.setEntityManager(entityManager);
         clientSystem.setInternalEntityStateEvents(Collections.<Class<? extends Event>>emptySet());
+        clientSystem.setContextEventFilter(contextEventFilter);
     }
 
     @Test
