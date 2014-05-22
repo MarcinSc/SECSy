@@ -14,6 +14,18 @@ public class DefaultLifeCycleSystem implements LifeCycleSystem {
     }
 
     @Override
+    public void preUpdate() {
+    }
+
+    @Override
+    public void update(long delta) {
+    }
+
+    @Override
+    public void postUpdate() {
+    }
+
+    @Override
     public void beforeDestroy() {
     }
 

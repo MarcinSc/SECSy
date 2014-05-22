@@ -3,6 +3,7 @@ package com.gempukku.secsy.system.client.host;
 import com.gempukku.secsy.EntityManager;
 import com.gempukku.secsy.EntityRef;
 import com.gempukku.secsy.EventListener;
+import com.gempukku.secsy.system.DefaultLifeCycleSystem;
 import com.gempukku.secsy.system.In;
 import com.gempukku.secsy.system.Share;
 
@@ -14,7 +15,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Share(ClientManager.class)
-public class ClientSystem<E> implements EventListener<E>, ClientManager<E> {
+public class ClientSystem<E> extends DefaultLifeCycleSystem implements EventListener<E>, ClientManager<E> {
     @In
     private EntityManager<E> entityManager;
     
@@ -77,6 +78,17 @@ public class ClientSystem<E> implements EventListener<E>, ClientManager<E> {
 
     public void removeEventRelevancyRule(EventRelevancyRule<E> eventRelevancyRule) {
         eventRelevancyRules.remove(eventRelevancyRule);
+    }
+
+    @Override
+    public void postUpdate() {
+        commitClientChanges();
+    }
+
+    public void commitClientChanges() {
+        for (ClientConnection<E> clientConnection : clientConnections.values()) {
+            clientConnection.getClient().commitChanges();
+        }
     }
 
     @Override

@@ -10,4 +10,6 @@ public interface Client<E> {
     public void removeEntity(int entityId);
 
     public void sendEvent(int entityId, EntityRef<E> entity, E event);
+
+    public void commitChanges();
 }

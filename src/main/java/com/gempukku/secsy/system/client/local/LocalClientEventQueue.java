@@ -14,6 +14,8 @@ import com.gempukku.secsy.system.client.host.EntityComponentFieldFilter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -25,6 +27,7 @@ public class LocalClientEventQueue<E> implements ClientEventQueue<E>, Client<E> 
     private EventSerializer<E> eventSerializer;
 
     private Queue<ClientEvent> eventQueue = new ConcurrentLinkedQueue<>();
+    private List<ClientEvent> updateQueue = new LinkedList<>();
 
     public LocalClientEventQueue() {
     }
@@ -39,12 +42,12 @@ public class LocalClientEventQueue<E> implements ClientEventQueue<E>, Client<E> 
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         entitySerializer.serializeEntity(entity, os, new CompositeEntityComponentFieldFilter<>(entityComponentFieldFilters));
 
-        eventQueue.add(new ClientEvent(ClientEventType.UPDATE, entityId, os.toByteArray()));
+        updateQueue.add(new ClientEvent(ClientEventType.UPDATE, entityId, os.toByteArray()));
     }
 
     @Override
     public void removeEntity(int entityId) {
-        eventQueue.add(new ClientEvent(ClientEventType.REMOVE, entityId, null));
+        updateQueue.add(new ClientEvent(ClientEventType.REMOVE, entityId, null));
     }
 
     @Override
@@ -52,7 +55,7 @@ public class LocalClientEventQueue<E> implements ClientEventQueue<E>, Client<E> 
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         eventSerializer.serializeEvent(event, os);
 
-        eventQueue.add(new ClientEvent(ClientEventType.EVENT, entityId, os.toByteArray()));
+        updateQueue.add(new ClientEvent(ClientEventType.EVENT, entityId, os.toByteArray()));
     }
 
     @Override
@@ -65,6 +68,12 @@ public class LocalClientEventQueue<E> implements ClientEventQueue<E>, Client<E> 
                 break;
             }
         }
+    }
+
+    @Override
+    public void commitChanges() {
+        eventQueue.addAll(updateQueue);
+        updateQueue.clear();
     }
 
     public enum ClientEventType {
