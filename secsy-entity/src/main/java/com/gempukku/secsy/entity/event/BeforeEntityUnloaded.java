@@ -1,7 +1,19 @@
 package com.gempukku.secsy.entity.event;
 
-public class BeforeEntityUnloaded extends Event {
-    public static final BeforeEntityUnloaded SINGLETON = new BeforeEntityUnloaded();
+import com.gempukku.secsy.entity.Component;
 
-    private BeforeEntityUnloaded() {}
+import java.util.Collection;
+import java.util.Collections;
+
+public class BeforeEntityUnloaded extends Event implements ComponentEvent {
+    private Collection<Class<? extends Component>> components;
+
+    public BeforeEntityUnloaded(Collection<Class<? extends Component>> components) {
+        this.components = components;
+    }
+
+    @Override
+    public Collection<Class<? extends Component>> getComponents() {
+        return Collections.unmodifiableCollection(components);
+    }
 }

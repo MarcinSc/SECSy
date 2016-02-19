@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class SimpleContext<S> implements SystemContext {
+public class SimpleContext<S> implements SystemContext<S> {
     private SystemProducer<S> systemProducer;
     private SystemInitializer<S> systemInitializer;
 
@@ -39,6 +39,12 @@ public class SimpleContext<S> implements SystemContext {
 
         systemMap = systemInitializer.initializeSystems(systems);
 
+        for (S system : systems) {
+            if (system instanceof ContextAwareSystem) {
+                ((ContextAwareSystem<S>) system).setContext(this);
+            }
+        }
+
         for (LifeCycleSystem lifeCycleSystem : lifeCycleSystems) {
             lifeCycleSystem.initialize();
         }
@@ -48,11 +54,16 @@ public class SimpleContext<S> implements SystemContext {
     }
 
     @Override
-    public <T> T getSystem(Class<T> clazz) {
+    public <T extends S> T getSystem(Class<T> clazz) {
         if (systemMap == null)
             return null;
 
         return (T) systemMap.get(clazz);
+    }
+
+    @Override
+    public Iterable<S> getSystems() {
+        return systems;
     }
 
     public void shutdown() {

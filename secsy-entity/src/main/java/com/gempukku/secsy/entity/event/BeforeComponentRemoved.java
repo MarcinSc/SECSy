@@ -6,14 +6,14 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
-public class BeforeComponentRemoved extends Event {
+public class BeforeComponentRemoved extends Event implements ComponentEvent {
     private Map<Class<? extends Component>, Component> components;
 
     public BeforeComponentRemoved(Map<Class<? extends Component>, Component> components) {
         this.components = components;
     }
 
-    public Collection<Class<? extends Component>> getRemovedComponents() {
+    public Collection<Class<? extends Component>> getComponents() {
         return Collections.unmodifiableCollection(components.keySet());
     }
 

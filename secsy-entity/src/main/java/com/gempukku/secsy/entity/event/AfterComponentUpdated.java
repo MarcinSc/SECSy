@@ -6,7 +6,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
-public class AfterComponentUpdated extends Event {
+public class AfterComponentUpdated extends Event implements ComponentEvent {
     private Map<Class<? extends Component>, Component> oldComponents;
     private Map<Class<? extends Component>, Component> newComponents;
 
@@ -16,7 +16,7 @@ public class AfterComponentUpdated extends Event {
         this.newComponents = newComponents;
     }
 
-    public Collection<Class<? extends Component>> getModifiedComponents() {
+    public Collection<Class<? extends Component>> getComponents() {
         return Collections.unmodifiableCollection(oldComponents.keySet());
     }
 

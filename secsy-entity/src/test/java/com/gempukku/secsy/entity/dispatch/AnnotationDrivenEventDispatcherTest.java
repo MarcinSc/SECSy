@@ -1,31 +1,33 @@
-package com.gempukku.secsy.annotation;
+package com.gempukku.secsy.entity.dispatch;
 
-import com.gempukku.secsy.EntityRef;
-import com.gempukku.secsy.Event;
-import com.gempukku.secsy.SampleComponent;
-import com.gempukku.secsy.SampleComponent2;
-import com.gempukku.secsy.SampleEvent;
-import com.gempukku.secsy.SampleSystem;
+import com.gempukku.secsy.context.SystemContext;
+import com.gempukku.secsy.entity.EntityRef;
+import com.gempukku.secsy.entity.SampleComponent;
+import com.gempukku.secsy.entity.SampleComponent2;
+import com.gempukku.secsy.entity.SampleEvent;
+import com.gempukku.secsy.entity.SampleSystem;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
-public class AnnotationDrivenReflectionEventDispatcherTest {
-    private AnnotationDrivenReflectionEventDispatcher dispatcher;
+public class AnnotationDrivenEventDispatcherTest {
+    private AnnotationDrivenEventDispatcher dispatcher;
     private SampleSystem sampleSystem;
-    private EntityRef<Event> entity;
+    private EntityRef entity;
 
     @Before
     public void setup() {
         sampleSystem = new SampleSystem();
-        dispatcher = new AnnotationDrivenReflectionEventDispatcher();
-        dispatcher.scanSystem(sampleSystem);
+        dispatcher = new AnnotationDrivenEventDispatcher();
+        SystemContext context = Mockito.mock(SystemContext.class);
+        Mockito.when(context.getSystems()).thenReturn(Arrays.asList(sampleSystem));
+        dispatcher.setContext(context);
+        dispatcher.postInitialize();
 
         entity = Mockito.mock(EntityRef.class);
     }
@@ -35,7 +37,7 @@ public class AnnotationDrivenReflectionEventDispatcherTest {
         Mockito.when(entity.hasComponent(SampleComponent.class)).thenReturn(true);
         Mockito.when(entity.getComponent(SampleComponent.class)).thenReturn(Mockito.mock(SampleComponent.class));
 
-        dispatcher.eventReceived(entity, new SampleEvent());
+        dispatcher.eventSent(entity, new SampleEvent());
 
         assertEquals(0, sampleSystem.invalidCalls);
         assertEquals(1, sampleSystem.validCalls);
@@ -45,7 +47,7 @@ public class AnnotationDrivenReflectionEventDispatcherTest {
     public void notMatchingEntityCall() {
         Mockito.when(entity.hasComponent(SampleComponent.class)).thenReturn(false);
 
-        dispatcher.eventReceived(entity, new SampleEvent());
+        dispatcher.eventSent(entity, new SampleEvent());
 
         assertEquals(0, sampleSystem.invalidCalls);
         assertEquals(0, sampleSystem.validCalls);
@@ -57,7 +59,7 @@ public class AnnotationDrivenReflectionEventDispatcherTest {
         Mockito.when(entity.getComponent(SampleComponent2.class)).thenReturn(Mockito.mock(SampleComponent2.class));
 
         try {
-            dispatcher.eventReceived(entity, new SampleEvent());
+            dispatcher.eventSent(entity, new SampleEvent());
             fail("Expected RuntimeException");
         } catch (RuntimeException exp) {
             final Throwable cause = exp.getCause();

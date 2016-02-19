@@ -141,7 +141,7 @@ public class SimpleEntityManagerTest {
         assertTrue(entityAndEvent.event instanceof AfterComponentUpdated);
 
         AfterComponentUpdated event = (AfterComponentUpdated) entityAndEvent.event;
-        assertTrue(event.getModifiedComponents().contains(SampleComponent.class));
+        assertTrue(event.getComponents().contains(SampleComponent.class));
         assertNull(event.getOldComponent(SampleComponent.class).getValue());
         assertEquals("value", event.getNewComponent(SampleComponent.class).getValue());
     }

@@ -1,4 +1,4 @@
-package com.gempukku.secsy.annotation;
+package com.gempukku.secsy.entity.dispatch;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

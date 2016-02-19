@@ -113,7 +113,8 @@ public class SimpleEntityManager implements EntityManager, InternalEntityManager
 
     private void sendEventsToThem(Set<Entity> loadedEntities) {
         for (Entity entity : loadedEntities) {
-            new EntityRefImpl(entity, false).send(AfterEntityLoaded.SINGLETON);
+            Set<Class<? extends Component>> components = new HashSet<>(entity.entityValues.keySet());
+            new EntityRefImpl(entity, false).send(new AfterEntityLoaded(components));
         }
     }
 
@@ -148,7 +149,10 @@ public class SimpleEntityManager implements EntityManager, InternalEntityManager
 
     private void notifyEntitiesTheyAreBeingUnloaded(Collection<Entity> entitiesToUnload) {
         entitiesToUnload.forEach(
-                entity -> new EntityRefImpl(entity, true).send(BeforeEntityUnloaded.SINGLETON));
+                entity -> {
+                    Set<Class<? extends Component>> components = new HashSet<>(entity.entityValues.keySet());
+                    new EntityRefImpl(entity, false).send(new BeforeEntityUnloaded(components));
+                });
     }
 
     private void tellRulesToStoreUnloadingEntities(Multimap<EntityRelevanceRule, Entity> entitiesToUnload) {
