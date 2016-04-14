@@ -1,14 +1,12 @@
 package com.gempukku.secsy.entity.game;
 
 import com.gempukku.secsy.context.annotation.RegisterSystem;
-
-import java.util.LinkedList;
-import java.util.List;
+import com.gempukku.secsy.context.util.PriorityCollection;
 
 @RegisterSystem(shared = {GameLoop.class, InternalGameLoop.class})
 public class SimpleGameLoop implements GameLoop, InternalGameLoop {
-    private List<GameLoopListener> gameLoopListeners = new LinkedList<>();
-    private List<InternalGameLoopListener> internalGameLoopListeners = new LinkedList<>();
+    private PriorityCollection<GameLoopListener> gameLoopListeners = new PriorityCollection<>();
+    private PriorityCollection<InternalGameLoopListener> internalGameLoopListeners = new PriorityCollection<>();
 
     @Override
     public void addGameLoopListener(GameLoopListener gameLoopListener) {
@@ -31,13 +29,13 @@ public class SimpleGameLoop implements GameLoop, InternalGameLoop {
     }
 
     @Override
-    public void processUpdate(long delta) {
+    public void processUpdate() {
         for (InternalGameLoopListener internalGameLoopListener : internalGameLoopListeners) {
             internalGameLoopListener.preUpdate();
         }
 
         for (GameLoopListener gameLoopListener : gameLoopListeners) {
-            gameLoopListener.update(delta);
+            gameLoopListener.update();
         }
 
         for (InternalGameLoopListener internalGameLoopListener : internalGameLoopListeners) {

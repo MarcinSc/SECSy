@@ -1,11 +1,15 @@
 package com.gempukku.secsy.entity;
 
+import com.gempukku.secsy.context.annotation.RegisterSystem;
 import com.gempukku.secsy.context.system.ShareSystemInitializer;
 import com.gempukku.secsy.entity.component.map.MapAnnotationDrivenProxyComponentManager;
 import com.gempukku.secsy.entity.event.AfterComponentAdded;
+import com.gempukku.secsy.entity.event.AfterComponentRemoved;
 import com.gempukku.secsy.entity.event.AfterComponentUpdated;
 import com.gempukku.secsy.entity.event.BeforeComponentRemoved;
 import com.gempukku.secsy.entity.event.Event;
+import com.gempukku.secsy.entity.game.InternalGameLoop;
+import com.gempukku.secsy.entity.game.InternalGameLoopListener;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -13,7 +17,11 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class SimpleEntityManagerTest {
     private SimpleEntityManager simpleEntityManager;
@@ -23,7 +31,8 @@ public class SimpleEntityManagerTest {
         MapAnnotationDrivenProxyComponentManager componentManager = new MapAnnotationDrivenProxyComponentManager();
         simpleEntityManager = new SimpleEntityManager();
         ShareSystemInitializer<Object> shareSystemInitializer = new ShareSystemInitializer<>();
-        shareSystemInitializer.initializeSystems(Arrays.asList(componentManager, simpleEntityManager));
+
+        shareSystemInitializer.initializeSystems(Arrays.asList(componentManager, simpleEntityManager, new MockInternalGameLoop()));
     }
 
     @Test
@@ -42,9 +51,27 @@ public class SimpleEntityManagerTest {
         assertFalse(copy.hasComponent(SampleComponent.class));
         assertFalse(source.hasComponent(SampleComponent.class));
 
-        copy.saveComponents(component);
+        copy.saveChanges();
         assertTrue(copy.hasComponent(SampleComponent.class));
         assertTrue(source.hasComponent(SampleComponent.class));
+    }
+
+    @Test
+    public void addComponentWithSaveInteractingMultipleEntityRefs() {
+        EntityRef source = simpleEntityManager.createEntity();
+
+        EntityRef copy = simpleEntityManager.createNewEntityRef(source);
+        SampleComponent component = copy.createComponent(SampleComponent.class);
+        component.setValue("value");
+
+        assertFalse(copy.hasComponent(SampleComponent.class));
+        assertFalse(source.hasComponent(SampleComponent.class));
+
+        copy.saveChanges();
+        assertTrue(copy.hasComponent(SampleComponent.class));
+        assertEquals("value", copy.getComponent(SampleComponent.class).getValue());
+        assertTrue(source.hasComponent(SampleComponent.class));
+        assertEquals("value", source.getComponent(SampleComponent.class).getValue());
     }
 
     @Test
@@ -53,7 +80,7 @@ public class SimpleEntityManagerTest {
 
         EntityRef copy = simpleEntityManager.createNewEntityRef(source);
         SampleComponent component = copy.createComponent(SampleComponent.class);
-        copy.saveComponents(component);
+        copy.saveChanges();
 
         SampleComponent sourceComponent = source.getComponent(SampleComponent.class);
         assertNotNull(sourceComponent);
@@ -65,7 +92,7 @@ public class SimpleEntityManagerTest {
         assertEquals("value", component.getValue());
 
         // Changes are immediately visible in the source after save
-        copy.saveComponents(component);
+        copy.saveChanges();
         assertEquals("value", sourceComponent.getValue());
         assertEquals("value", component.getValue());
     }
@@ -76,12 +103,13 @@ public class SimpleEntityManagerTest {
 
         EntityRef copy = simpleEntityManager.createNewEntityRef(source);
         SampleComponent component = copy.createComponent(SampleComponent.class);
-        copy.saveComponents(component);
+        copy.saveChanges();
 
         assertTrue(source.hasComponent(SampleComponent.class));
 
         //noinspection unchecked
         copy.removeComponents(SampleComponent.class);
+        copy.saveChanges();
 
         assertFalse(source.hasComponent(SampleComponent.class));
     }
@@ -110,7 +138,7 @@ public class SimpleEntityManagerTest {
 
         assertEquals(0, listener.events.size());
 
-        entity.saveComponents(component);
+        entity.saveChanges();
 
         assertEquals(1, listener.events.size());
         EntityAndEvent entityAndEvent = listener.events.get(0);
@@ -123,7 +151,7 @@ public class SimpleEntityManagerTest {
     public void notifyOnUpdatingComponent() {
         EntityRef entity = simpleEntityManager.createEntity();
         SampleComponent component = entity.createComponent(SampleComponent.class);
-        entity.saveComponents(component);
+        entity.saveChanges();
 
         Listener listener = new Listener();
         simpleEntityManager.addEntityEventListener(listener);
@@ -132,7 +160,7 @@ public class SimpleEntityManagerTest {
 
         assertEquals(0, listener.events.size());
 
-        entity.saveComponents(component);
+        entity.saveChanges();
 
         assertEquals(1, listener.events.size());
         EntityAndEvent entityAndEvent = listener.events.get(0);
@@ -150,7 +178,7 @@ public class SimpleEntityManagerTest {
     public void notifyOnRemovingComponent() {
         EntityRef entity = simpleEntityManager.createEntity();
         SampleComponent component = entity.createComponent(SampleComponent.class);
-        entity.saveComponents(component);
+        entity.saveChanges();
 
         Listener listener = new Listener();
         simpleEntityManager.addEntityEventListener(listener);
@@ -158,12 +186,18 @@ public class SimpleEntityManagerTest {
         assertEquals(0, listener.events.size());
 
         entity.removeComponents(SampleComponent.class);
+        entity.saveChanges();
 
-        assertEquals(1, listener.events.size());
+        assertEquals(2, listener.events.size());
         EntityAndEvent entityAndEvent = listener.events.get(0);
 
         simpleEntityManager.isSameEntity(entityAndEvent.entity, entity);
         assertTrue(entityAndEvent.event instanceof BeforeComponentRemoved);
+
+        entityAndEvent = listener.events.get(1);
+
+        simpleEntityManager.isSameEntity(entityAndEvent.entity, entity);
+        assertTrue(entityAndEvent.event instanceof AfterComponentRemoved);
     }
 
     private class Listener implements EntityEventListener {
@@ -172,6 +206,25 @@ public class SimpleEntityManagerTest {
         @Override
         public void eventSent(EntityRef entity, Event event) {
             events.add(new EntityAndEvent(entity, event));
+        }
+    }
+
+    @RegisterSystem(
+            shared = InternalGameLoop.class)
+    public static class MockInternalGameLoop implements InternalGameLoop {
+        @Override
+        public void addInternalGameLoopListener(InternalGameLoopListener internalGameLoopListener) {
+
+        }
+
+        @Override
+        public void removeInternalGameLooplListener(InternalGameLoopListener internalGameLoopListener) {
+
+        }
+
+        @Override
+        public void processUpdate() {
+
         }
     }
 

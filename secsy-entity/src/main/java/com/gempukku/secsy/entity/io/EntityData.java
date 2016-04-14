@@ -1,8 +1,9 @@
 package com.gempukku.secsy.entity.io;
 
-import java.util.Collection;
+import com.gempukku.secsy.entity.Component;
 
 public interface EntityData {
-    int getEntityId();
-    Iterable<ComponentData> getComponents();
+    Iterable<? extends ComponentData> getComponents();
+
+    ComponentData getComponent(Class<? extends Component> componentClass);
 }

@@ -1,7 +1,7 @@
 package com.gempukku.secsy.entity.component.map;
 
-import com.gempukku.secsy.entity.Component;
 import com.gempukku.secsy.context.annotation.RegisterSystem;
+import com.gempukku.secsy.entity.Component;
 import com.gempukku.secsy.entity.EntityRef;
 import com.gempukku.secsy.entity.component.ComponentManager;
 import com.gempukku.secsy.entity.component.InternalComponentManager;
@@ -13,7 +13,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-@RegisterSystem(profiles = {"mapComponent"}, shared = {ComponentManager.class, InternalComponentManager.class})
+@RegisterSystem(profiles = {"annotationComponents"}, shared = {ComponentManager.class, InternalComponentManager.class})
 public class MapAnnotationDrivenProxyComponentManager implements ComponentManager, InternalComponentManager {
     private static final Object NULL_VALUE = new Object();
     private Map<Class<? extends Component>, ComponentDef> componentDefinitions = new HashMap<>();

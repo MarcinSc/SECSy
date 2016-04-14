@@ -9,6 +9,7 @@ import com.gempukku.secsy.entity.Component;
 import com.gempukku.secsy.entity.EntityEventListener;
 import com.gempukku.secsy.entity.EntityRef;
 import com.gempukku.secsy.entity.InternalEntityManager;
+import com.gempukku.secsy.entity.event.ComponentEvent;
 import com.gempukku.secsy.entity.event.Event;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -16,6 +17,7 @@ import com.google.common.collect.Multimap;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.Collection;
 
 @RegisterSystem
 public class AnnotationDrivenEventDispatcher implements ContextAwareSystem<Object>, LifeCycleSystem, EntityEventListener {
@@ -84,6 +86,23 @@ public class AnnotationDrivenEventDispatcher implements ContextAwareSystem<Objec
                 if (!entity.hasComponent(componentRequired)) {
                     valid = false;
                     break;
+                }
+            }
+            if (valid && event instanceof ComponentEvent) {
+                // Either defined components by listener have to be empty (interested in receiving all changes),
+                // or at least one of the components that is defined by listener has to be in the ComponentEvent collection
+                if (eventListenerDefinition.getComponentParameters().length != 0) {
+                    Collection<Class<? extends Component>> eventComponents = ((ComponentEvent) event).getComponents();
+                    boolean hasAtLeastOne = false;
+                    for (Class<? extends Component> definedComponent : eventListenerDefinition.getComponentParameters()) {
+                        if (eventComponents.contains(definedComponent)) {
+                            hasAtLeastOne = true;
+                            break;
+                        }
+                    }
+                    if (!hasAtLeastOne) {
+                        valid = false;
+                    }
                 }
             }
             if (valid) {
