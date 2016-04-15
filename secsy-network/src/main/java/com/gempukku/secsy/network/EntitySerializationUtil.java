@@ -1,9 +1,11 @@
-package com.gempukku.secsy.network.serialize;
+package com.gempukku.secsy.network;
 
 import com.gempukku.secsy.entity.Component;
 import com.gempukku.secsy.entity.EntityRef;
 import com.gempukku.secsy.entity.component.InternalComponentManager;
 import com.gempukku.secsy.network.server.EntityComponentFieldFilter;
+import com.gempukku.secsy.serialization.ComponentInformation;
+import com.gempukku.secsy.serialization.EntityInformation;
 
 import java.util.Map;
 

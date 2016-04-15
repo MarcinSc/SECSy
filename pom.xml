@@ -9,6 +9,7 @@
     <modules>
         <module>secsy-context</module>
         <module>secsy-entity</module>
+        <module>secsy-serialization</module>
         <module>secsy-network</module>
     </modules>
     <dependencies>

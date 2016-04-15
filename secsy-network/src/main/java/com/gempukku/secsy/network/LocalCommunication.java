@@ -5,10 +5,9 @@ import com.gempukku.secsy.entity.component.InternalComponentManager;
 import com.gempukku.secsy.entity.event.Event;
 import com.gempukku.secsy.entity.io.StoredEntityData;
 import com.gempukku.secsy.network.client.ServerCommunication;
-import com.gempukku.secsy.network.serialize.EntityInformation;
-import com.gempukku.secsy.network.serialize.EntitySerializationUtil;
 import com.gempukku.secsy.network.server.ClientCommunication;
 import com.gempukku.secsy.network.server.EntityComponentFieldFilter;
+import com.gempukku.secsy.serialization.EntityInformation;
 
 import java.io.IOException;
 import java.util.Collection;
