@@ -59,7 +59,7 @@ public interface EntityRef {
      * @param clazz
      * @param <T>
      */
-    <T extends Component> void removeComponents(Class<T>... clazz);
+    void removeComponents(Class<? extends Component>... clazz);
 
     /**
      * Sends an event to an entity.

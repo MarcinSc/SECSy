@@ -1,7 +1,7 @@
 package com.gempukku.secsy.entity.dispatch;
 
 import com.gempukku.secsy.context.SystemContext;
-import com.gempukku.secsy.context.annotation.In;
+import com.gempukku.secsy.context.annotation.Inject;
 import com.gempukku.secsy.context.annotation.RegisterSystem;
 import com.gempukku.secsy.context.system.ContextAwareSystem;
 import com.gempukku.secsy.context.system.LifeCycleSystem;
@@ -21,7 +21,7 @@ import java.util.Collection;
 
 @RegisterSystem
 public class AnnotationDrivenEventDispatcher implements ContextAwareSystem<Object>, LifeCycleSystem, EntityEventListener {
-    @In
+    @Inject
     private InternalEntityManager internalEntityManager;
 
     private Multimap<Class<? extends Event>, EventListenerDefinition> eventListenerDefinitions = HashMultimap.create();

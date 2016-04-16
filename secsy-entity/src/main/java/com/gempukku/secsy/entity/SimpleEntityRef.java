@@ -159,9 +159,9 @@ public class SimpleEntityRef implements EntityRef {
     }
 
     @Override
-    public <T extends Component> void removeComponents(Class<T>... clazz) {
+    public void removeComponents(Class<? extends Component>... clazz) {
         validateWritable();
-        for (Class<T> tClass : clazz) {
+        for (Class<? extends Component> tClass : clazz) {
             removedComponents.add(tClass);
         }
     }

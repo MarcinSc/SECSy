@@ -1,6 +1,6 @@
 package com.gempukku.secsy.network.client;
 
-import com.gempukku.secsy.context.annotation.In;
+import com.gempukku.secsy.context.annotation.Inject;
 import com.gempukku.secsy.context.annotation.NetProfiles;
 import com.gempukku.secsy.context.annotation.RegisterSystem;
 import com.gempukku.secsy.context.system.LifeCycleSystem;
@@ -37,11 +37,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @RegisterSystem(
         profiles = NetProfiles.CLIENT, shared = {EntityManager.class, InternalEntityManager.class, ServerEventBus.class})
 public class RemoteEntityManager implements EntityManager, InternalEntityManager, ServerEventBus, LifeCycleSystem, InternalGameLoopListener {
-    @In
+    @Inject
     private ComponentManager componentManager;
-    @In
+    @Inject
     private InternalComponentManager internalComponentManager;
-    @In
+    @Inject
     private InternalGameLoop internalGameLoop;
 
     private PriorityCollection<EntityEventListener> listeners = new PriorityCollection<>();
@@ -321,6 +321,15 @@ public class RemoteEntityManager implements EntityManager, InternalEntityManager
 
                             return true;
                         }),
+                        entity -> createSimpleEntityRef(entity, false)));
+    }
+
+    @Override
+    public Iterable<EntityRef> getAllEntities() {
+        return Iterables.concat(
+                Iterables.transform(serverEntities,
+                        entity -> createSimpleEntityRef(entity, false)),
+                Iterables.transform(clientEntities,
                         entity -> createSimpleEntityRef(entity, false)));
     }
 

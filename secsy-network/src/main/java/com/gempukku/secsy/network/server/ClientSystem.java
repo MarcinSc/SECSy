@@ -1,6 +1,6 @@
 package com.gempukku.secsy.network.server;
 
-import com.gempukku.secsy.context.annotation.In;
+import com.gempukku.secsy.context.annotation.Inject;
 import com.gempukku.secsy.context.annotation.NetProfiles;
 import com.gempukku.secsy.context.annotation.RegisterSystem;
 import com.gempukku.secsy.context.system.LifeCycleSystem;
@@ -28,9 +28,9 @@ import java.util.Set;
         profiles = NetProfiles.AUTHORITY, shared = ClientManager.class)
 public class ClientSystem implements ClientManager, EntityEventListener, LifeCycleSystem,
         ClientEntityRelevancyRuleListener, InternalGameLoopListener {
-    @In
+    @Inject
     private InternalEntityManager internalEntityManager;
-    @In
+    @Inject
     private InternalGameLoop internalGameLoop;
 
     private List<ClientEntityRelevanceRule> relevanceRuleList = new LinkedList<>();

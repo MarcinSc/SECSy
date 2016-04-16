@@ -1,6 +1,6 @@
 package com.gempukku.secsy.entity;
 
-import com.gempukku.secsy.context.annotation.In;
+import com.gempukku.secsy.context.annotation.Inject;
 import com.gempukku.secsy.context.annotation.NetProfiles;
 import com.gempukku.secsy.context.annotation.RegisterSystem;
 import com.gempukku.secsy.context.system.LifeCycleSystem;
@@ -30,11 +30,11 @@ import java.util.Set;
 @RegisterSystem(profiles = NetProfiles.AUTHORITY, shared = {EntityManager.class, InternalEntityManager.class, EntityRelevanceRuleRegistry.class})
 public class SimpleEntityManager implements EntityManager, InternalEntityManager,
         EntityRelevanceRuleRegistry, LifeCycleSystem, InternalGameLoopListener {
-    @In
+    @Inject
     private ComponentManager componentManager;
-    @In
+    @Inject
     private InternalComponentManager internalComponentManager;
-    @In
+    @Inject
     private InternalGameLoop internalGameLoop;
 
     private PriorityCollection<EntityEventListener> entityEventListeners = new PriorityCollection<>();
@@ -287,6 +287,12 @@ public class SimpleEntityManager implements EntityManager, InternalEntityManager
 
                     return true;
                 }),
+                entity -> createSimpleEntityRef(entity, false));
+    }
+
+    @Override
+    public Iterable<EntityRef> getAllEntities() {
+        return Iterables.transform(entities,
                 entity -> createSimpleEntityRef(entity, false));
     }
 

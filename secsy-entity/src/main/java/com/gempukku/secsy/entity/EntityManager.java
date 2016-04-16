@@ -18,5 +18,7 @@ public interface EntityManager {
 
     Iterable<EntityRef> getEntitiesWithComponents(Class<? extends Component> component, Class<? extends Component>... additionalComponents);
 
+    Iterable<EntityRef> getAllEntities();
+
     String getEntityUniqueIdentifier(EntityRef entityRef);
 }

@@ -1,6 +1,6 @@
 package com.gempukku.secsy.entity.index;
 
-import com.gempukku.secsy.context.annotation.In;
+import com.gempukku.secsy.context.annotation.Inject;
 import com.gempukku.secsy.context.annotation.RegisterSystem;
 import com.gempukku.secsy.context.system.LifeCycleSystem;
 import com.gempukku.secsy.entity.Component;
@@ -16,7 +16,7 @@ import java.util.Set;
         shared = EntityIndexManager.class)
 public class SimpleEntityIndexManager implements EntityIndexManager, EntityRefCreationCallback, EntityListener,
         LifeCycleSystem {
-    @In
+    @Inject
     private InternalEntityManager internalEntityManager;
 
     private Set<ComponentEntityIndex> indices = new HashSet<>();
