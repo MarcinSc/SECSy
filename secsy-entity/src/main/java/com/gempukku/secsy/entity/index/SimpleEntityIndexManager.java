@@ -3,16 +3,13 @@ package com.gempukku.secsy.entity.index;
 import com.gempukku.secsy.context.annotation.Inject;
 import com.gempukku.secsy.context.annotation.RegisterSystem;
 import com.gempukku.secsy.context.system.LifeCycleSystem;
-import com.gempukku.secsy.entity.Component;
-import com.gempukku.secsy.entity.EntityListener;
-import com.gempukku.secsy.entity.EntityRef;
-import com.gempukku.secsy.entity.InternalEntityManager;
-import com.gempukku.secsy.entity.SimpleEntity;
+import com.gempukku.secsy.entity.*;
 
 import java.util.HashSet;
 import java.util.Set;
 
 @RegisterSystem(
+        profiles = "simpleEntityIndexManager",
         shared = EntityIndexManager.class)
 public class SimpleEntityIndexManager implements EntityIndexManager, EntityRefCreationCallback, EntityListener,
         LifeCycleSystem {
