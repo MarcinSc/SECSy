@@ -1,31 +1,21 @@
 package com.gempukku.secsy.network.server;
 
 import com.gempukku.secsy.context.annotation.Inject;
-import com.gempukku.secsy.context.annotation.NetProfiles;
 import com.gempukku.secsy.context.annotation.RegisterSystem;
 import com.gempukku.secsy.context.system.LifeCycleSystem;
 import com.gempukku.secsy.entity.EntityEventListener;
 import com.gempukku.secsy.entity.EntityRef;
 import com.gempukku.secsy.entity.InternalEntityManager;
-import com.gempukku.secsy.entity.event.AfterComponentAdded;
-import com.gempukku.secsy.entity.event.AfterComponentRemoved;
-import com.gempukku.secsy.entity.event.AfterComponentUpdated;
-import com.gempukku.secsy.entity.event.BeforeEntityUnloaded;
-import com.gempukku.secsy.entity.event.Event;
+import com.gempukku.secsy.entity.event.*;
 import com.gempukku.secsy.entity.game.InternalGameLoop;
 import com.gempukku.secsy.entity.game.InternalGameLoopListener;
 import com.gempukku.secsy.network.ToClientEvent;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @RegisterSystem(
-        profiles = NetProfiles.AUTHORITY, shared = ClientManager.class)
+        profiles = "clientSupport", shared = ClientManager.class)
 public class ClientSystem implements ClientManager, EntityEventListener, LifeCycleSystem,
         ClientEntityRelevancyRuleListener, InternalGameLoopListener {
     @Inject

@@ -1,18 +1,10 @@
 package com.gempukku.secsy.network.client;
 
 import com.gempukku.secsy.context.annotation.Inject;
-import com.gempukku.secsy.context.annotation.NetProfiles;
 import com.gempukku.secsy.context.annotation.RegisterSystem;
 import com.gempukku.secsy.context.system.LifeCycleSystem;
 import com.gempukku.secsy.context.util.PriorityCollection;
-import com.gempukku.secsy.entity.Component;
-import com.gempukku.secsy.entity.EntityEventListener;
-import com.gempukku.secsy.entity.EntityListener;
-import com.gempukku.secsy.entity.EntityManager;
-import com.gempukku.secsy.entity.EntityRef;
-import com.gempukku.secsy.entity.InternalEntityManager;
-import com.gempukku.secsy.entity.SimpleEntity;
-import com.gempukku.secsy.entity.SimpleEntityRef;
+import com.gempukku.secsy.entity.*;
 import com.gempukku.secsy.entity.component.ComponentManager;
 import com.gempukku.secsy.entity.component.InternalComponentManager;
 import com.gempukku.secsy.entity.event.AfterComponentAdded;
@@ -26,16 +18,11 @@ import com.gempukku.secsy.entity.io.EntityData;
 import com.gempukku.secsy.entity.io.StoredEntityData;
 import com.google.common.collect.Iterables;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @RegisterSystem(
-        profiles = NetProfiles.CLIENT, shared = {EntityManager.class, InternalEntityManager.class, ServerEventBus.class})
+        profiles = "remoteEntityManager", shared = {EntityManager.class, InternalEntityManager.class, ServerEventBus.class})
 public class RemoteEntityManager implements EntityManager, InternalEntityManager, ServerEventBus, LifeCycleSystem, InternalGameLoopListener {
     @Inject
     private ComponentManager componentManager;

@@ -1,7 +1,6 @@
 package com.gempukku.secsy.entity;
 
 import com.gempukku.secsy.context.annotation.Inject;
-import com.gempukku.secsy.context.annotation.NetProfiles;
 import com.gempukku.secsy.context.annotation.RegisterSystem;
 import com.gempukku.secsy.context.system.LifeCycleSystem;
 import com.gempukku.secsy.context.util.PriorityCollection;
@@ -20,14 +19,9 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-@RegisterSystem(profiles = NetProfiles.AUTHORITY, shared = {EntityManager.class, InternalEntityManager.class, EntityRelevanceRuleRegistry.class})
+@RegisterSystem(profiles = "simpleEntityManager", shared = {EntityManager.class, InternalEntityManager.class, EntityRelevanceRuleRegistry.class})
 public class SimpleEntityManager implements EntityManager, InternalEntityManager,
         EntityRelevanceRuleRegistry, LifeCycleSystem, InternalGameLoopListener {
     @Inject
