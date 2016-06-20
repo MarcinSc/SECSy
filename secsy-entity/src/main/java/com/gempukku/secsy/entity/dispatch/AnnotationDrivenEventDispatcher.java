@@ -19,7 +19,9 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Collection;
 
-@RegisterSystem
+@RegisterSystem(
+        profiles = "annotationEventDispatcher"
+)
 public class AnnotationDrivenEventDispatcher implements ContextAwareSystem<Object>, LifeCycleSystem, EntityEventListener {
     @Inject
     private InternalEntityManager internalEntityManager;
