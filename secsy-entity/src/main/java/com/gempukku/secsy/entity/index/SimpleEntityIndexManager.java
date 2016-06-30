@@ -32,7 +32,7 @@ public class SimpleEntityIndexManager implements EntityIndexManager, EntityRefCr
 
     @Override
     public EntityRef createEntityRef(SimpleEntity entity) {
-        return internalEntityManager.wrapEntity(entity);
+        return internalEntityManager.wrapEntityStub(entity);
     }
 
     @Override

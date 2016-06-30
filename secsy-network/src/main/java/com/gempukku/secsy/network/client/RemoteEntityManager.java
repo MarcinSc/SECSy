@@ -254,6 +254,14 @@ public class RemoteEntityManager implements EntityManager, InternalEntityManager
         return createSimpleEntityRef(entity, false);
     }
 
+    @Override
+    public EntityRef wrapEntityData(EntityData entityData) {
+        SimpleEntity entity = new SimpleEntity(internalComponentManager, 0);
+        entity.exists = false;
+        addEntityDataToEntity(entityData, entity);
+        return createSimpleEntityRef(entity, true);
+    }
+
     private void addEntityDataToEntity(EntityData entityData, SimpleEntity entity) {
         entityData.getComponents().forEach(
                 componentData -> {
@@ -266,7 +274,7 @@ public class RemoteEntityManager implements EntityManager, InternalEntityManager
     }
 
     @Override
-    public EntityRef wrapEntity(SimpleEntity entity) {
+    public EntityRef wrapEntityStub(SimpleEntity entity) {
         return createSimpleEntityRef(entity, false);
     }
 

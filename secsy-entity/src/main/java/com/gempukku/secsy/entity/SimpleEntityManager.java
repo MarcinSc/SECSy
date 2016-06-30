@@ -242,6 +242,14 @@ public class SimpleEntityManager implements EntityManager, InternalEntityManager
     }
 
     @Override
+    public EntityRef wrapEntityData(EntityData entityData) {
+        SimpleEntity entity = new SimpleEntity(internalComponentManager, 0);
+        entity.exists = false;
+        addEntityDataToEntity(entityData, entity);
+        return createSimpleEntityRef(entity, true);
+    }
+
+    @Override
     public EntityRef createNewEntityRef(EntityRef entityRef) {
         return createSimpleEntityRef(((SimpleEntityRef) entityRef).getEntity(), false);
     }
@@ -252,7 +260,7 @@ public class SimpleEntityManager implements EntityManager, InternalEntityManager
     }
 
     @Override
-    public EntityRef wrapEntity(SimpleEntity entity) {
+    public EntityRef wrapEntityStub(SimpleEntity entity) {
         return createSimpleEntityRef(entity, false);
     }
 

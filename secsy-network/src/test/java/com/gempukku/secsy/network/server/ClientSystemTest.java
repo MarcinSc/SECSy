@@ -4,17 +4,8 @@ import com.gempukku.secsy.context.annotation.RegisterSystem;
 import com.gempukku.secsy.context.system.ClassSystemProducer;
 import com.gempukku.secsy.context.system.ShareSystemInitializer;
 import com.gempukku.secsy.context.system.SimpleContext;
-import com.gempukku.secsy.entity.EntityEventListener;
-import com.gempukku.secsy.entity.EntityListener;
-import com.gempukku.secsy.entity.EntityRef;
-import com.gempukku.secsy.entity.InternalEntityManager;
-import com.gempukku.secsy.entity.SampleEvent;
-import com.gempukku.secsy.entity.SimpleEntity;
-import com.gempukku.secsy.entity.event.AfterComponentAdded;
-import com.gempukku.secsy.entity.event.AfterComponentRemoved;
-import com.gempukku.secsy.entity.event.AfterComponentUpdated;
-import com.gempukku.secsy.entity.event.BeforeComponentRemoved;
-import com.gempukku.secsy.entity.event.BeforeEntityUnloaded;
+import com.gempukku.secsy.entity.*;
+import com.gempukku.secsy.entity.event.*;
 import com.gempukku.secsy.entity.game.InternalGameLoop;
 import com.gempukku.secsy.entity.game.InternalGameLoopListener;
 import org.junit.Before;
@@ -23,13 +14,7 @@ import org.mockito.Mockito;
 import org.mockito.internal.verification.Times;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class ClientSystemTest {
     private ClientSystem clientSystem;
@@ -298,7 +283,7 @@ public class ClientSystemTest {
         }
 
         @Override
-        public EntityRef wrapEntity(SimpleEntity entity) {
+        public EntityRef wrapEntityStub(SimpleEntity entity) {
             return null;
         }
 

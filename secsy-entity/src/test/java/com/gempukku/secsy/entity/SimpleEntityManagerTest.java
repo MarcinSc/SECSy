@@ -3,25 +3,17 @@ package com.gempukku.secsy.entity;
 import com.gempukku.secsy.context.annotation.RegisterSystem;
 import com.gempukku.secsy.context.system.ShareSystemInitializer;
 import com.gempukku.secsy.entity.component.map.MapAnnotationDrivenProxyComponentManager;
-import com.gempukku.secsy.entity.event.AfterComponentAdded;
-import com.gempukku.secsy.entity.event.AfterComponentRemoved;
-import com.gempukku.secsy.entity.event.AfterComponentUpdated;
-import com.gempukku.secsy.entity.event.BeforeComponentRemoved;
-import com.gempukku.secsy.entity.event.Event;
+import com.gempukku.secsy.entity.event.*;
 import com.gempukku.secsy.entity.game.InternalGameLoop;
 import com.gempukku.secsy.entity.game.InternalGameLoopListener;
+import com.gempukku.secsy.entity.io.ComponentData;
+import com.gempukku.secsy.entity.io.EntityData;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class SimpleEntityManagerTest {
     private SimpleEntityManager simpleEntityManager;
@@ -126,6 +118,44 @@ public class SimpleEntityManagerTest {
         simpleEntityManager.destroyEntity(copy);
         assertFalse(source.exists());
         assertFalse(copy.exists());
+    }
+
+    @Test
+    public void createEntityDataWrapper() {
+        Listener listener = new Listener();
+        simpleEntityManager.addEntityEventListener(listener);
+
+        ComponentData sampleComponentData = new ComponentData() {
+            @Override
+            public Class<? extends Component> getComponentClass() {
+                return SampleComponent.class;
+            }
+
+            @Override
+            public Map<String, Object> getFields() {
+                return Collections.singletonMap("value", "a");
+            }
+        };
+
+        EntityData data = new EntityData() {
+            @Override
+            public ComponentData getComponent(Class<? extends Component> componentClass) {
+                if (componentClass == SampleComponent.class)
+                    return sampleComponentData;
+                return null;
+            }
+
+            @Override
+            public Iterable<? extends ComponentData> getComponents() {
+                return Collections.singleton(sampleComponentData);
+            }
+        };
+
+        EntityRef result = simpleEntityManager.wrapEntityData(data);
+
+        assertEquals(0, listener.events.size());
+
+        assertEquals("a", result.getComponent(SampleComponent.class).getValue());
     }
 
     @Test

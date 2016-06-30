@@ -11,5 +11,5 @@ public interface InternalEntityManager {
 
     int getEntityId(EntityRef entityRef);
 
-    EntityRef wrapEntity(SimpleEntity entity);
+    EntityRef wrapEntityStub(SimpleEntity entity);
 }

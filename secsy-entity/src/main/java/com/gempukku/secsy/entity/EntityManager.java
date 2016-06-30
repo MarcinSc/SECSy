@@ -21,4 +21,6 @@ public interface EntityManager {
     Iterable<EntityRef> getAllEntities();
 
     String getEntityUniqueIdentifier(EntityRef entityRef);
+
+    EntityRef wrapEntityData(EntityData entityData);
 }
