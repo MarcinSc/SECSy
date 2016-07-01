@@ -205,6 +205,31 @@ public class SimpleEntityManagerTest {
     }
 
     @Test
+    public void notifyOnDestroyingEntity() {
+        EntityRef entity = simpleEntityManager.createEntity();
+        SampleComponent component = entity.createComponent(SampleComponent.class);
+        entity.saveChanges();
+
+        Listener listener = new Listener();
+        simpleEntityManager.addEntityEventListener(listener);
+
+        assertEquals(0, listener.events.size());
+
+        simpleEntityManager.destroyEntity(entity);
+
+        assertEquals(2, listener.events.size());
+        EntityAndEvent entityAndEvent = listener.events.get(0);
+
+        simpleEntityManager.isSameEntity(entityAndEvent.entity, entity);
+        assertTrue(entityAndEvent.event instanceof BeforeComponentRemoved);
+
+        entityAndEvent = listener.events.get(1);
+
+        simpleEntityManager.isSameEntity(entityAndEvent.entity, entity);
+        assertTrue(entityAndEvent.event instanceof AfterComponentRemoved);
+    }
+
+    @Test
     public void notifyOnRemovingComponent() {
         EntityRef entity = simpleEntityManager.createEntity();
         SampleComponent component = entity.createComponent(SampleComponent.class);

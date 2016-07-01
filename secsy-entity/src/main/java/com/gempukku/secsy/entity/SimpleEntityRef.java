@@ -1,18 +1,9 @@
 package com.gempukku.secsy.entity;
 
 import com.gempukku.secsy.entity.component.InternalComponentManager;
-import com.gempukku.secsy.entity.event.AfterComponentAdded;
-import com.gempukku.secsy.entity.event.AfterComponentRemoved;
-import com.gempukku.secsy.entity.event.AfterComponentUpdated;
-import com.gempukku.secsy.entity.event.BeforeComponentRemoved;
-import com.gempukku.secsy.entity.event.Event;
+import com.gempukku.secsy.entity.event.*;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class SimpleEntityRef implements EntityRef {
     private InternalComponentManager internalComponentManager;
@@ -93,6 +84,17 @@ public class SimpleEntityRef implements EntityRef {
             }
         }
 
+        if (!removedComponents.isEmpty()) {
+            Map<Class<? extends Component>, Component> removedComponentsMap = new HashMap<>();
+            for (Class<? extends Component> removedComponent : removedComponents) {
+                Component componentValue = entity.entityValues.get(removedComponent);
+                removedComponentsMap.put(removedComponent, internalComponentManager.copyComponentUnmodifiable(componentValue, false));
+            }
+
+            BeforeComponentRemoved beforeRemovedEvent = new BeforeComponentRemoved(removedComponentsMap);
+            entityEventListener.eventSent(this, beforeRemovedEvent);
+        }
+
         // Actual data changing
         Map<Class<? extends Component>, Component> removedComponentsMap = new HashMap<>();
         for (Class<? extends Component> componentClass : removedComponents) {
@@ -133,12 +135,6 @@ public class SimpleEntityRef implements EntityRef {
 
         removedComponents.clear();
         newComponents.clear();
-
-
-        if (!removedComponentsMap.isEmpty()) {
-            BeforeComponentRemoved beforeRemovedEvent = new BeforeComponentRemoved(removedComponentsMap);
-            entityEventListener.eventSent(this, beforeRemovedEvent);
-        }
 
         entityListener.entitiesModified(Collections.singleton(entity));
 
