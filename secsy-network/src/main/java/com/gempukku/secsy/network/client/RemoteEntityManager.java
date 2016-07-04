@@ -4,7 +4,14 @@ import com.gempukku.secsy.context.annotation.Inject;
 import com.gempukku.secsy.context.annotation.RegisterSystem;
 import com.gempukku.secsy.context.system.LifeCycleSystem;
 import com.gempukku.secsy.context.util.PriorityCollection;
-import com.gempukku.secsy.entity.*;
+import com.gempukku.secsy.entity.Component;
+import com.gempukku.secsy.entity.EntityEventListener;
+import com.gempukku.secsy.entity.EntityListener;
+import com.gempukku.secsy.entity.EntityManager;
+import com.gempukku.secsy.entity.EntityRef;
+import com.gempukku.secsy.entity.InternalEntityManager;
+import com.gempukku.secsy.entity.SimpleEntity;
+import com.gempukku.secsy.entity.SimpleEntityRef;
 import com.gempukku.secsy.entity.component.ComponentManager;
 import com.gempukku.secsy.entity.component.InternalComponentManager;
 import com.gempukku.secsy.entity.event.AfterComponentAdded;
@@ -18,7 +25,11 @@ import com.gempukku.secsy.entity.io.EntityData;
 import com.gempukku.secsy.entity.io.StoredEntityData;
 import com.google.common.collect.Iterables;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @RegisterSystem(
@@ -333,9 +344,9 @@ public class RemoteEntityManager implements EntityManager, InternalEntityManager
         SimpleEntity underlyingEntity = ((SimpleEntityRef) entityRef).getEntity();
         if (serverEntities.contains(underlyingEntity))
             throw new IllegalStateException("Can't destroy a server entity");
-        Collection<Class<? extends Component>> components = entityRef.listComponents();
+        Iterable<Class<? extends Component>> components = entityRef.listComponents();
         //noinspection unchecked
-        entityRef.removeComponents(components.toArray(new Class[components.size()]));
+        entityRef.removeComponents(Iterables.toArray(components, Class.class));
         entityRef.saveChanges();
         underlyingEntity.exists = false;
         clientEntities.remove(underlyingEntity);

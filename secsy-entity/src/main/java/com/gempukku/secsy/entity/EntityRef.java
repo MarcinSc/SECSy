@@ -3,8 +3,6 @@ package com.gempukku.secsy.entity;
 import com.gempukku.secsy.context.annotation.API;
 import com.gempukku.secsy.entity.event.Event;
 
-import java.util.Collection;
-
 /**
  * Reference to an entity that allows to query, store, update and remove components from it, as well
  * as send events to it.
@@ -34,7 +32,7 @@ public interface EntityRef {
      * Lists components for this entity.
      * @return
      */
-    Collection<Class<? extends Component>> listComponents();
+    Iterable<Class<? extends Component>> listComponents();
 
     /**
      * Checks if that entity has the component.

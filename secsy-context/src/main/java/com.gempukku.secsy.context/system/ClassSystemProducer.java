@@ -1,6 +1,5 @@
 package com.gempukku.secsy.context.system;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -13,7 +12,7 @@ public class ClassSystemProducer implements SystemProducer<Object> {
     }
 
     @Override
-    public Collection<Object> createSystems() {
+    public Iterable<Object> createSystems() {
         try {
             Set<Object> systems = new HashSet<>();
 

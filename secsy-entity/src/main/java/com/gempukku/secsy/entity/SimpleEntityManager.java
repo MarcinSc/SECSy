@@ -19,7 +19,12 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 @RegisterSystem(profiles = "simpleEntityManager", shared = {EntityManager.class, InternalEntityManager.class, EntityRelevanceRuleRegistry.class})
 public class SimpleEntityManager implements EntityManager, InternalEntityManager,
@@ -266,9 +271,9 @@ public class SimpleEntityManager implements EntityManager, InternalEntityManager
 
     @Override
     public void destroyEntity(EntityRef entityRef) {
-        Collection<Class<? extends Component>> components = entityRef.listComponents();
+        Iterable<Class<? extends Component>> components = entityRef.listComponents();
         //noinspection unchecked
-        entityRef.removeComponents(components.toArray(new Class[components.size()]));
+        entityRef.removeComponents(Iterables.toArray(components, Class.class));
         entityRef.saveChanges();
         SimpleEntity underlyingEntity = ((SimpleEntityRef) entityRef).getEntity();
         underlyingEntity.exists = false;

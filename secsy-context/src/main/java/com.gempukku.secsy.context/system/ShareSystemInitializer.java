@@ -4,14 +4,13 @@ import com.gempukku.secsy.context.annotation.Inject;
 import com.gempukku.secsy.context.annotation.RegisterSystem;
 
 import java.lang.reflect.Field;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 public class ShareSystemInitializer<S> implements SystemInitializer<S> {
     @Override
-    public Map<Class<?>, S> initializeSystems(Collection<S> systems) {
+    public Map<Class<?>, S> initializeSystems(Iterable<S> systems) {
         Map<Class<?>, S> context = new HashMap<>();
 
         // Figure out shared objects
@@ -63,6 +62,6 @@ public class ShareSystemInitializer<S> implements SystemInitializer<S> {
     }
 
     @Override
-    public void destroySystems(Collection<S> systems) {
+    public void destroySystems(Iterable<S> systems) {
     }
 }

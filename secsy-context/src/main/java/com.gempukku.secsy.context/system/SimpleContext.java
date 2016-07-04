@@ -3,7 +3,6 @@ package com.gempukku.secsy.context.system;
 import com.gempukku.secsy.context.SystemContext;
 import com.gempukku.secsy.context.util.PriorityCollection;
 
-import java.util.Collection;
 import java.util.Map;
 
 public class SimpleContext<S> implements SystemContext<S> {
@@ -12,7 +11,7 @@ public class SimpleContext<S> implements SystemContext<S> {
 
     private PriorityCollection<LifeCycleSystem> lifeCycleSystems = new PriorityCollection<>();
 
-    private Collection<S> systems;
+    private Iterable<S> systems;
     private Map<Class<?>, S> systemMap;
 
     public void setSystemProducer(SystemProducer<S> systemProducer) {
