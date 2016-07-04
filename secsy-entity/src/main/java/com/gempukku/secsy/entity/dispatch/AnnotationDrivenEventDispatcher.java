@@ -10,6 +10,7 @@ import com.gempukku.secsy.entity.EntityEventListener;
 import com.gempukku.secsy.entity.EntityRef;
 import com.gempukku.secsy.entity.InternalEntityManager;
 import com.gempukku.secsy.entity.event.ComponentEvent;
+import com.gempukku.secsy.entity.event.ConsumableEvent;
 import com.gempukku.secsy.entity.event.Event;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -82,6 +83,9 @@ public class AnnotationDrivenEventDispatcher implements ContextAwareSystem<Objec
 
     @Override
     public void eventSent(EntityRef entity, Event event) {
+        ConsumableEvent consumableEvent = null;
+        if (event instanceof ConsumableEvent)
+            consumableEvent = (ConsumableEvent) event;
         for (EventListenerDefinition eventListenerDefinition : eventListenerDefinitions.get(event.getClass())) {
             boolean valid = true;
             for (Class<? extends Component> componentRequired : eventListenerDefinition.getComponentParameters()) {
@@ -109,6 +113,8 @@ public class AnnotationDrivenEventDispatcher implements ContextAwareSystem<Objec
             }
             if (valid) {
                 eventListenerDefinition.eventReceived(entity, event);
+                if (consumableEvent != null && consumableEvent.isConsumed())
+                    break;
             }
         }
     }
