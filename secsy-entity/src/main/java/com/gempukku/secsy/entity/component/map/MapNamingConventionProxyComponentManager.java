@@ -223,29 +223,45 @@ public class MapNamingConventionProxyComponentManager implements ComponentManage
         }
 
         private Object convertToResult(Object value, Class<?> resultClass) {
-            if (value == null)
-                return null;
             if (resultClass.isPrimitive()) {
                 if (resultClass == boolean.class) {
+                    if (value == null)
+                        return false;
                     return value;
                 }
                 Number numberValue = (Number) value;
                 if (resultClass == float.class) {
+                    if (numberValue == null)
+                        return 0f;
                     return numberValue.floatValue();
                 } else if (resultClass == double.class) {
+                    if (numberValue == null)
+                        return 0d;
                     return numberValue.doubleValue();
                 } else if (resultClass == long.class) {
+                    if (numberValue == null)
+                        return 0L;
                     return numberValue.longValue();
                 } else if (resultClass == int.class) {
+                    if (numberValue == null)
+                        return 0;
                     return numberValue.intValue();
                 } else if (resultClass == short.class) {
+                    if (numberValue == null)
+                        return (short) 0;
                     return numberValue.shortValue();
                 } else if (resultClass == char.class) {
+                    if (numberValue == null)
+                        return (char) 0;
                     return (char) numberValue.intValue();
                 } else if (resultClass == byte.class) {
+                    if (numberValue == null)
+                        return (byte) 0;
                     return numberValue.byteValue();
                 }
             }
+            if (value == null)
+                return null;
             if (resultClass.isAssignableFrom(Number.class)) {
                 if (resultClass == Boolean.class) {
                     return value;
