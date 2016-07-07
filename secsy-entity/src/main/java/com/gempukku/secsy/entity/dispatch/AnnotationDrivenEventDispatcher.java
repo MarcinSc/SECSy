@@ -97,35 +97,38 @@ public class AnnotationDrivenEventDispatcher implements ContextAwareSystem<Objec
         ConsumableEvent consumableEvent = null;
         if (event instanceof ConsumableEvent)
             consumableEvent = (ConsumableEvent) event;
-        for (EventListenerDefinition eventListenerDefinition : eventListenerDefinitions.get(event.getClass())) {
-            boolean valid = true;
-            for (Class<? extends Component> componentRequired : eventListenerDefinition.getComponentParameters()) {
-                if (!entity.hasComponent(componentRequired)) {
-                    valid = false;
-                    break;
+        PriorityCollection<EventListenerDefinition> eventListenerDefinitions = this.eventListenerDefinitions.get(event.getClass());
+        if (eventListenerDefinitions != null) {
+            for (EventListenerDefinition eventListenerDefinition : eventListenerDefinitions) {
+                boolean valid = true;
+                for (Class<? extends Component> componentRequired : eventListenerDefinition.getComponentParameters()) {
+                    if (!entity.hasComponent(componentRequired)) {
+                        valid = false;
+                        break;
+                    }
                 }
-            }
-            if (valid && event instanceof ComponentEvent) {
-                // Either defined components by listener have to be empty (interested in receiving all changes),
-                // or at least one of the components that is defined by listener has to be in the ComponentEvent collection
-                if (eventListenerDefinition.getComponentParameters().length != 0) {
-                    Collection<Class<? extends Component>> eventComponents = ((ComponentEvent) event).getComponents();
-                    boolean hasAtLeastOne = false;
-                    for (Class<? extends Component> definedComponent : eventListenerDefinition.getComponentParameters()) {
-                        if (eventComponents.contains(definedComponent)) {
-                            hasAtLeastOne = true;
-                            break;
+                if (valid && event instanceof ComponentEvent) {
+                    // Either defined components by listener have to be empty (interested in receiving all changes),
+                    // or at least one of the components that is defined by listener has to be in the ComponentEvent collection
+                    if (eventListenerDefinition.getComponentParameters().length != 0) {
+                        Collection<Class<? extends Component>> eventComponents = ((ComponentEvent) event).getComponents();
+                        boolean hasAtLeastOne = false;
+                        for (Class<? extends Component> definedComponent : eventListenerDefinition.getComponentParameters()) {
+                            if (eventComponents.contains(definedComponent)) {
+                                hasAtLeastOne = true;
+                                break;
+                            }
+                        }
+                        if (!hasAtLeastOne) {
+                            valid = false;
                         }
                     }
-                    if (!hasAtLeastOne) {
-                        valid = false;
-                    }
                 }
-            }
-            if (valid) {
-                eventListenerDefinition.eventReceived(entity, event);
-                if (consumableEvent != null && consumableEvent.isConsumed())
-                    break;
+                if (valid) {
+                    eventListenerDefinition.eventReceived(entity, event);
+                    if (consumableEvent != null && consumableEvent.isConsumed())
+                        break;
+                }
             }
         }
     }
