@@ -11,23 +11,23 @@ import java.util.Iterator;
 import java.util.TreeMap;
 
 public class PriorityCollection<T> implements Iterable<T> {
-    private Multimap<Integer, T> multimap = Multimaps.newMultimap(new TreeMap<>(Collections.reverseOrder()),
+    private Multimap<Float, T> multimap = Multimaps.newMultimap(new TreeMap<>(Collections.reverseOrder()),
             (Supplier<Collection<T>>) ArrayList::new);
 
     public void add(T t) {
-        int priority = getItemPriority(t);
+        float priority = getItemPriority(t);
 
         multimap.put(priority, t);
     }
 
     public void remove(T t) {
-        int priority = getItemPriority(t);
+        float priority = getItemPriority(t);
 
         multimap.remove(priority, t);
     }
 
-    private int getItemPriority(T t) {
-        int priority = 0;
+    private float getItemPriority(T t) {
+        float priority = 0;
         if (t instanceof Prioritable)
             priority = ((Prioritable) t).getPriority();
         return priority;

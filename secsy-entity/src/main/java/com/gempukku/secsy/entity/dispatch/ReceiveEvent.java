@@ -8,4 +8,5 @@ import java.lang.annotation.Target;
 @Retention(value = RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD})
 public @interface ReceiveEvent {
+    float priority() default 0;
 }

@@ -5,6 +5,8 @@ import com.gempukku.secsy.context.annotation.Inject;
 import com.gempukku.secsy.context.annotation.RegisterSystem;
 import com.gempukku.secsy.context.system.ContextAwareSystem;
 import com.gempukku.secsy.context.system.LifeCycleSystem;
+import com.gempukku.secsy.context.util.Prioritable;
+import com.gempukku.secsy.context.util.PriorityCollection;
 import com.gempukku.secsy.entity.Component;
 import com.gempukku.secsy.entity.EntityEventListener;
 import com.gempukku.secsy.entity.EntityRef;
@@ -12,13 +14,13 @@ import com.gempukku.secsy.entity.InternalEntityManager;
 import com.gempukku.secsy.entity.event.ComponentEvent;
 import com.gempukku.secsy.entity.event.ConsumableEvent;
 import com.gempukku.secsy.entity.event.Event;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 @RegisterSystem(
         profiles = "annotationEventDispatcher"
@@ -27,7 +29,7 @@ public class AnnotationDrivenEventDispatcher implements ContextAwareSystem<Objec
     @Inject
     private InternalEntityManager internalEntityManager;
 
-    private Multimap<Class<? extends Event>, EventListenerDefinition> eventListenerDefinitions = HashMultimap.create();
+    private Map<Class<? extends Event>, PriorityCollection<EventListenerDefinition>> eventListenerDefinitions = new HashMap<>();
     private Iterable<Object> systems;
 
     @Override
@@ -71,14 +73,23 @@ public class AnnotationDrivenEventDispatcher implements ContextAwareSystem<Objec
                                     components[i - 2] = (Class<? extends Component>) parameters[i];
                                 }
 
-                                eventListenerDefinitions.put((Class<? extends Event>) parameters[0],
-                                        new EventListenerDefinition(system, method, components));
+                                addListenerDefinition((Class<? extends Event>) parameters[0],
+                                        new EventListenerDefinition(system, method, components, receiveEventAnnotation.priority()));
                             }
                         }
                     }
                 }
             }
         }
+    }
+
+    private void addListenerDefinition(Class<? extends Event> clazz, EventListenerDefinition eventListenerDefinition) {
+        PriorityCollection<EventListenerDefinition> eventListenerDefinitions = this.eventListenerDefinitions.get(clazz);
+        if (eventListenerDefinitions == null) {
+            eventListenerDefinitions = new PriorityCollection<>();
+            this.eventListenerDefinitions.put(clazz, eventListenerDefinitions);
+        }
+        eventListenerDefinitions.add(eventListenerDefinition);
     }
 
     @Override
@@ -119,15 +130,22 @@ public class AnnotationDrivenEventDispatcher implements ContextAwareSystem<Objec
         }
     }
 
-    private class EventListenerDefinition {
+    private class EventListenerDefinition implements Prioritable {
         private Object system;
         private Method method;
         private Class<? extends Component>[] componentParameters;
+        private float priority;
 
-        private EventListenerDefinition(Object system, Method method, Class<? extends Component>[] componentParameters) {
+        private EventListenerDefinition(Object system, Method method, Class<? extends Component>[] componentParameters, float priority) {
             this.system = system;
             this.method = method;
             this.componentParameters = componentParameters;
+            this.priority = priority;
+        }
+
+        @Override
+        public float getPriority() {
+            return priority;
         }
 
         public Class<? extends Component>[] getComponentParameters() {
