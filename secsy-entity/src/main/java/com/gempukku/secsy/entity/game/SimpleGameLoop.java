@@ -1,22 +1,15 @@
 package com.gempukku.secsy.entity.game;
 
+import com.gempukku.secsy.context.annotation.Inject;
 import com.gempukku.secsy.context.annotation.RegisterSystem;
 import com.gempukku.secsy.context.util.PriorityCollection;
 
-@RegisterSystem(shared = {GameLoop.class, InternalGameLoop.class})
-public class SimpleGameLoop implements GameLoop, InternalGameLoop {
-    private PriorityCollection<GameLoopListener> gameLoopListeners = new PriorityCollection<>();
+@RegisterSystem(shared = {InternalGameLoop.class})
+public class SimpleGameLoop implements InternalGameLoop {
+    @Inject
+    private GameLoopEntityProvider gameLoopEntityProvider;
+
     private PriorityCollection<InternalGameLoopListener> internalGameLoopListeners = new PriorityCollection<>();
-
-    @Override
-    public void addGameLoopListener(GameLoopListener gameLoopListener) {
-        gameLoopListeners.add(gameLoopListener);
-    }
-
-    @Override
-    public void removeGameLoopListener(GameLoopListener gameLoopListener) {
-        gameLoopListeners.remove(gameLoopListener);
-    }
 
     @Override
     public void addInternalGameLoopListener(InternalGameLoopListener internalGameLoopListener) {
@@ -34,9 +27,7 @@ public class SimpleGameLoop implements GameLoop, InternalGameLoop {
             internalGameLoopListener.preUpdate();
         }
 
-        for (GameLoopListener gameLoopListener : gameLoopListeners) {
-            gameLoopListener.update();
-        }
+        gameLoopEntityProvider.getGameLoopEntity().send(new GameLoopUpdate());
 
         for (InternalGameLoopListener internalGameLoopListener : internalGameLoopListeners) {
             internalGameLoopListener.postUpdate();
