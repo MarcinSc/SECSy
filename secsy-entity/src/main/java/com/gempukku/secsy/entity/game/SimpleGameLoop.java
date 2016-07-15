@@ -4,7 +4,9 @@ import com.gempukku.secsy.context.annotation.Inject;
 import com.gempukku.secsy.context.annotation.RegisterSystem;
 import com.gempukku.secsy.context.util.PriorityCollection;
 
-@RegisterSystem(shared = {InternalGameLoop.class})
+@RegisterSystem(
+        profiles = "gameLoop",
+        shared = {InternalGameLoop.class})
 public class SimpleGameLoop implements InternalGameLoop {
     @Inject
     private GameLoopEntityProvider gameLoopEntityProvider;
