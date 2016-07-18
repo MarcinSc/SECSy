@@ -9,4 +9,6 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD})
 public @interface ReceiveEvent {
     float priority() default 0;
+
+    String priorityName() default "";
 }

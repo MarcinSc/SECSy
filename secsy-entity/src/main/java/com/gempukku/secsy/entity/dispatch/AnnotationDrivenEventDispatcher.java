@@ -28,6 +28,8 @@ import java.util.Map;
 public class AnnotationDrivenEventDispatcher implements ContextAwareSystem<Object>, LifeCycleSystem, EntityEventListener {
     @Inject
     private InternalEntityManager internalEntityManager;
+    @Inject(optional = true)
+    private PriorityResolver priorityResolver;
 
     private Map<Class<? extends Event>, PriorityCollection<EventListenerDefinition>> eventListenerDefinitions = new HashMap<>();
     private Iterable<Object> systems;
@@ -74,13 +76,22 @@ public class AnnotationDrivenEventDispatcher implements ContextAwareSystem<Objec
                                 }
 
                                 addListenerDefinition((Class<? extends Event>) parameters[0],
-                                        new EventListenerDefinition(system, method, components, receiveEventAnnotation.priority()));
+                                        new EventListenerDefinition(system, method, components, getPriority(receiveEventAnnotation)));
                             }
                         }
                     }
                 }
             }
         }
+    }
+
+    private float getPriority(ReceiveEvent receiveEventAnnotation) {
+        if (priorityResolver != null && !receiveEventAnnotation.priorityName().equals("")) {
+            Float priority = priorityResolver.getPriority(receiveEventAnnotation.priorityName());
+            if (priority != null)
+                return priority;
+        }
+        return receiveEventAnnotation.priority();
     }
 
     private void addListenerDefinition(Class<? extends Event> clazz, EventListenerDefinition eventListenerDefinition) {
