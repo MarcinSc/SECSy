@@ -19,12 +19,7 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @RegisterSystem(profiles = "simpleEntityManager", shared = {EntityManager.class, InternalEntityManager.class, EntityRelevanceRuleRegistry.class})
 public class SimpleEntityManager implements EntityManager, InternalEntityManager,
@@ -299,7 +294,7 @@ public class SimpleEntityManager implements EntityManager, InternalEntityManager
 
     @Override
     public Iterable<EntityRef> getAllEntities() {
-        return Iterables.transform(entities,
+        return Iterables.transform(new HashSet<>(entities),
                 entity -> createSimpleEntityRef(entity, false));
     }
 
