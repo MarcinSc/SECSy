@@ -3,8 +3,8 @@ package com.gempukku.secsy.network.server;
 import com.gempukku.secsy.entity.EntityRef;
 import com.gempukku.secsy.entity.component.InternalComponentManager;
 import com.gempukku.secsy.entity.event.Event;
+import com.gempukku.secsy.entity.serialization.EntityInformation;
 import com.gempukku.secsy.network.EntitySerializationUtil;
-import com.gempukku.secsy.serialization.EntityInformation;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import java.io.DataInputStream;

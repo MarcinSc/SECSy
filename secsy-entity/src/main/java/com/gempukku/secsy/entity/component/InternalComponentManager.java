@@ -10,6 +10,7 @@ public interface InternalComponentManager {
     /**
      * Creates mutable component for specific source component. Throws an exception if this object already has a
      * Component of that class already.
+     *
      * @param clazz
      * @param <T>
      * @return
@@ -18,6 +19,7 @@ public interface InternalComponentManager {
 
     /**
      * Gets a component wrapper with the specified value object.
+     *
      * @param originalComponent
      * @param <T>
      * @return
@@ -28,14 +30,18 @@ public interface InternalComponentManager {
 
     /**
      * Stores pending changes for the component wrapper with the specified value object.
+     *
      * @param originalComponent
      * @param changedComponent
      * @param <T>
      */
     <T extends Component> void saveComponent(T originalComponent, T changedComponent);
 
+    void invalidateComponent(Component component);
+
     /**
      * Returns the class used to represent the component.
+     *
      * @param component
      * @param <T>
      * @return
@@ -46,13 +52,31 @@ public interface InternalComponentManager {
 
     /**
      * Returns all the fields in the component an their types.
+     *
      * @param component
      * @return
      */
     Map<String, Class<?>> getComponentFieldTypes(Component component);
 
     /**
+     * Returns all the fields in the component an their types.
+     *
+     * @param component
+     * @return
+     */
+    Map<String, Class<?>> getComponentFieldTypes(Class<? extends Component> component);
+
+    /**
+     * Returns all the fields in the component an their types.
+     *
+     * @param component
+     * @return
+     */
+    Map<String, Class<?>> getComponentFieldContainedClasses(Class<? extends Component> component);
+
+    /**
      * Returns the value of the field of this component.
+     *
      * @param component
      * @param fieldName
      * @param clazz

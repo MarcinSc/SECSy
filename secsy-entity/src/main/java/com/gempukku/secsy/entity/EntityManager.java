@@ -8,7 +8,9 @@ import com.gempukku.secsy.entity.io.EntityData;
 public interface EntityManager {
     EntityRef createEntity();
 
-    EntityRef createEntity(EntityData entityData);
+    EntityRef createEntityFromPrefab(String prefabName);
+
+    EntityRef createEntityFromData(EntityData entityData);
 
     EntityRef createNewEntityRef(EntityRef entityRef);
 
@@ -23,4 +25,6 @@ public interface EntityManager {
     String getEntityUniqueIdentifier(EntityRef entityRef);
 
     EntityRef wrapEntityData(EntityData entityData);
+
+    EntityData exposeEntityData(EntityRef entityRef);
 }

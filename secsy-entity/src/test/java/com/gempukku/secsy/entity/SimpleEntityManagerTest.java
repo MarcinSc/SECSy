@@ -2,12 +2,12 @@ package com.gempukku.secsy.entity;
 
 import com.gempukku.secsy.context.annotation.RegisterSystem;
 import com.gempukku.secsy.context.system.ShareSystemInitializer;
-import com.gempukku.secsy.entity.component.map.MapAnnotationDrivenProxyComponentManager;
-import com.gempukku.secsy.entity.event.*;
+import com.gempukku.secsy.entity.component.MapNamingConventionProxyComponentManager;
+import com.gempukku.secsy.entity.event.Event;
 import com.gempukku.secsy.entity.game.InternalGameLoop;
 import com.gempukku.secsy.entity.game.InternalGameLoopListener;
-import com.gempukku.secsy.entity.io.ComponentData;
-import com.gempukku.secsy.entity.io.EntityData;
+import com.gempukku.secsy.entity.serialization.ComponentInformation;
+import com.gempukku.secsy.entity.serialization.EntityInformation;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -20,11 +20,20 @@ public class SimpleEntityManagerTest {
 
     @Before
     public void setup() {
-        MapAnnotationDrivenProxyComponentManager componentManager = new MapAnnotationDrivenProxyComponentManager();
+        MapNamingConventionProxyComponentManager componentManager = new MapNamingConventionProxyComponentManager();
+        SimpleEntityComponentFieldHandler fieldHandler = new SimpleEntityComponentFieldHandler();
+        SimpleComponentFieldConverter fieldConverter = new SimpleComponentFieldConverter();
         simpleEntityManager = new SimpleEntityManager();
-        ShareSystemInitializer<Object> shareSystemInitializer = new ShareSystemInitializer<>();
-
-        shareSystemInitializer.initializeSystems(Arrays.asList(componentManager, simpleEntityManager, new MockInternalGameLoop()));
+        TestPrefabManager testPrefabManager = new TestPrefabManager();
+        final EntityInformation entityInformation = new EntityInformation();
+        ComponentInformation componentInformation = new ComponentInformation(SampleComponent.class);
+        componentInformation.addField("value", "a");
+        entityInformation.addComponent(componentInformation);
+        testPrefabManager.addPrefab("prefab", entityInformation);
+        ShareSystemInitializer shareSystemInitializer = new ShareSystemInitializer();
+        Collection<Object> systems = Arrays.asList(componentManager, simpleEntityManager, testPrefabManager, fieldHandler, fieldConverter, new MockInternalGameLoop());
+        Map<Class<?>, Object> systemMap = shareSystemInitializer.extractSystems(systems);
+        shareSystemInitializer.initializeObjects(systems, systemMap);
     }
 
     @Test
@@ -71,7 +80,7 @@ public class SimpleEntityManagerTest {
         EntityRef source = simpleEntityManager.createEntity();
 
         EntityRef copy = simpleEntityManager.createNewEntityRef(source);
-        SampleComponent component = copy.createComponent(SampleComponent.class);
+        copy.createComponent(SampleComponent.class);
         copy.saveChanges();
 
         SampleComponent sourceComponent = source.getComponent(SampleComponent.class);
@@ -79,12 +88,15 @@ public class SimpleEntityManagerTest {
         assertNull(sourceComponent.getValue());
 
         // Unsaved change is not visible in the source
+        SampleComponent component = copy.getComponent(SampleComponent.class);
         component.setValue("value");
         assertNull(sourceComponent.getValue());
         assertEquals("value", component.getValue());
 
         // Changes are immediately visible in the source after save
         copy.saveChanges();
+
+        component = copy.getComponent(SampleComponent.class);
         assertEquals("value", sourceComponent.getValue());
         assertEquals("value", component.getValue());
     }
@@ -125,31 +137,10 @@ public class SimpleEntityManagerTest {
         Listener listener = new Listener();
         simpleEntityManager.addEntityEventListener(listener);
 
-        ComponentData sampleComponentData = new ComponentData() {
-            @Override
-            public Class<? extends Component> getComponentClass() {
-                return SampleComponent.class;
-            }
-
-            @Override
-            public Map<String, Object> getFields() {
-                return Collections.singletonMap("value", "a");
-            }
-        };
-
-        EntityData data = new EntityData() {
-            @Override
-            public ComponentData getComponent(Class<? extends Component> componentClass) {
-                if (componentClass == SampleComponent.class)
-                    return sampleComponentData;
-                return null;
-            }
-
-            @Override
-            public Iterable<? extends ComponentData> getComponents() {
-                return Collections.singleton(sampleComponentData);
-            }
-        };
+        EntityInformation data = new EntityInformation();
+        ComponentInformation componentInformation = new ComponentInformation(SampleComponent.class);
+        componentInformation.addField("value", "a");
+        data.addComponent(componentInformation);
 
         EntityRef result = simpleEntityManager.wrapEntityData(data);
 
@@ -159,104 +150,44 @@ public class SimpleEntityManagerTest {
     }
 
     @Test
-    public void notifyOnAddingComponent() {
-        Listener listener = new Listener();
-        simpleEntityManager.addEntityEventListener(listener);
+    public void createFromPrefab() {
+        EntityRef entity = simpleEntityManager.createEntityFromPrefab("prefab");
+        assertNotNull(entity);
+        SampleComponent component = entity.getComponent(SampleComponent.class);
+        assertEquals("a", component.getValue());
 
-        EntityRef entity = simpleEntityManager.createEntity();
-        SampleComponent component = entity.createComponent(SampleComponent.class);
+        assertTrue(entity.hasComponent(SampleComponent.class));
+        assertFalse(entity.hasComponent(SampleComponent2.class));
 
-        assertEquals(0, listener.events.size());
+        try {
+            entity.createComponent(SampleComponent.class);
+            fail("Expected exception");
+        } catch (IllegalStateException exp) {
+            // expected
+        }
 
+        component.setValue("b");
         entity.saveChanges();
 
-        assertEquals(1, listener.events.size());
-        EntityAndEvent entityAndEvent = listener.events.get(0);
+        assertEquals("b", entity.getComponent(SampleComponent.class).getValue());
 
-        simpleEntityManager.isSameEntity(entityAndEvent.entity, entity);
-        assertTrue(entityAndEvent.event instanceof AfterComponentAdded);
-    }
-
-    @Test
-    public void notifyOnUpdatingComponent() {
-        EntityRef entity = simpleEntityManager.createEntity();
-        SampleComponent component = entity.createComponent(SampleComponent.class);
-        entity.saveChanges();
-
-        Listener listener = new Listener();
-        simpleEntityManager.addEntityEventListener(listener);
-
-        component.setValue("value");
-
-        assertEquals(0, listener.events.size());
-
-        entity.saveChanges();
-
-        assertEquals(1, listener.events.size());
-        EntityAndEvent entityAndEvent = listener.events.get(0);
-
-        simpleEntityManager.isSameEntity(entityAndEvent.entity, entity);
-        assertTrue(entityAndEvent.event instanceof AfterComponentUpdated);
-
-        AfterComponentUpdated event = (AfterComponentUpdated) entityAndEvent.event;
-        assertTrue(event.getComponents().contains(SampleComponent.class));
-        assertNull(event.getOldComponent(SampleComponent.class).getValue());
-        assertEquals("value", event.getNewComponent(SampleComponent.class).getValue());
-    }
-
-    @Test
-    public void notifyOnDestroyingEntity() {
-        EntityRef entity = simpleEntityManager.createEntity();
-        SampleComponent component = entity.createComponent(SampleComponent.class);
-        entity.saveChanges();
-
-        Listener listener = new Listener();
-        simpleEntityManager.addEntityEventListener(listener);
-
-        assertEquals(0, listener.events.size());
-
-        simpleEntityManager.destroyEntity(entity);
-
-        assertEquals(2, listener.events.size());
-        EntityAndEvent entityAndEvent = listener.events.get(0);
-
-        simpleEntityManager.isSameEntity(entityAndEvent.entity, entity);
-        assertTrue(entityAndEvent.event instanceof BeforeComponentRemoved);
-
-        entityAndEvent = listener.events.get(1);
-
-        simpleEntityManager.isSameEntity(entityAndEvent.entity, entity);
-        assertTrue(entityAndEvent.event instanceof AfterComponentRemoved);
-    }
-
-    @Test
-    public void notifyOnRemovingComponent() {
-        EntityRef entity = simpleEntityManager.createEntity();
-        SampleComponent component = entity.createComponent(SampleComponent.class);
-        entity.saveChanges();
-
-        Listener listener = new Listener();
-        simpleEntityManager.addEntityEventListener(listener);
-
-        assertEquals(0, listener.events.size());
+        assertEquals("a", simpleEntityManager.createEntityFromPrefab("prefab").getComponent(SampleComponent.class).getValue());
 
         entity.removeComponents(SampleComponent.class);
         entity.saveChanges();
 
-        assertEquals(2, listener.events.size());
-        EntityAndEvent entityAndEvent = listener.events.get(0);
+        assertFalse(entity.hasComponent(SampleComponent.class));
+        assertNull(entity.getComponent(SampleComponent.class));
 
-        simpleEntityManager.isSameEntity(entityAndEvent.entity, entity);
-        assertTrue(entityAndEvent.event instanceof BeforeComponentRemoved);
+        SampleComponent newComponent = entity.createComponent(SampleComponent.class);
+        newComponent.setValue("b");
+        entity.saveChanges();
 
-        entityAndEvent = listener.events.get(1);
-
-        simpleEntityManager.isSameEntity(entityAndEvent.entity, entity);
-        assertTrue(entityAndEvent.event instanceof AfterComponentRemoved);
+        assertEquals("b", entity.getComponent(SampleComponent.class).getValue());
     }
 
     private class Listener implements EntityEventListener {
-        private List<EntityAndEvent> events = new LinkedList<>();
+        private List<EntityAndEvent> events = new LinkedList<EntityAndEvent>();
 
         @Override
         public void eventSent(EntityRef entity, Event event) {

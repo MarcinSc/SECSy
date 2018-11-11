@@ -3,13 +3,13 @@ package com.gempukku.secsy.entity.index;
 import com.gempukku.secsy.entity.Component;
 import com.gempukku.secsy.entity.EntityRef;
 import com.gempukku.secsy.entity.SimpleEntity;
-import com.google.common.collect.Iterables;
 
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 public class ComponentEntityIndex implements EntityIndex {
-    private Set<SimpleEntity> entitiesInIndex = new HashSet<>();
+    private Set<SimpleEntity> entitiesInIndex = new HashSet<SimpleEntity>();
 
     private EntityRefCreationCallback callback;
     private Class<? extends Component>[] indexedComponents;
@@ -17,6 +17,10 @@ public class ComponentEntityIndex implements EntityIndex {
     public ComponentEntityIndex(EntityRefCreationCallback callback, Class<? extends Component>... indexedComponents) {
         this.callback = callback;
         this.indexedComponents = indexedComponents;
+    }
+
+    public Class<? extends Component>[] getIndexedComponents() {
+        return indexedComponents;
     }
 
     public void entitiesModified(Iterable<SimpleEntity> entities) {
@@ -37,13 +41,21 @@ public class ComponentEntityIndex implements EntityIndex {
 
     @Override
     public Iterable<EntityRef> getEntities() {
-        return Iterables.transform(new HashSet<>(entitiesInIndex),
-                entity -> callback.createEntityRef(entity));
+        Set<EntityRef> result = new HashSet<EntityRef>();
+        for (SimpleEntity simpleEntity : entitiesInIndex) {
+            result.add(callback.createEntityRef(simpleEntity));
+        }
+        return result;
+    }
+
+    @Override
+    public Iterator<EntityRef> iterator() {
+        return getEntities().iterator();
     }
 
     private boolean hasAllComponents(SimpleEntity entity) {
         for (Class<? extends Component> indexedComponent : indexedComponents) {
-            if (entity.getComponent(indexedComponent) == null)
+            if (!entity.hasComponent(indexedComponent))
                 return false;
         }
         return true;

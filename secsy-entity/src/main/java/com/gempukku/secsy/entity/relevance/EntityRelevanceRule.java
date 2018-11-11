@@ -18,12 +18,12 @@ public interface EntityRelevanceRule {
 
     /**
      * Called to store the specified irrelevant entities governed by this entity.
+     *
      * @param entities
      */
     void storeEntities(Iterable<? extends StoredEntityData> entities);
 
     /**
-     *
      * @return
      */
     Iterable<? extends StoredEntityData> getNewRelevantEntities();

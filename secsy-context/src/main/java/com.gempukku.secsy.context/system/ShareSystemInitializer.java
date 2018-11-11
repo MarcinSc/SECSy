@@ -8,13 +8,23 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ShareSystemInitializer<S> implements SystemInitializer<S> {
+public class ShareSystemInitializer implements ObjectInitializer, SystemExtractor {
+    private Map<Class<?>, Object> additionalSystems;
+
+    public ShareSystemInitializer() {
+        this(Collections.<Class<?>, Object>emptyMap());
+    }
+
+    public ShareSystemInitializer(Map<Class<?>, Object> additionalSystems) {
+        this.additionalSystems = additionalSystems;
+    }
+
     @Override
-    public Map<Class<?>, S> initializeSystems(Iterable<S> systems) {
-        Map<Class<?>, S> context = new HashMap<>();
+    public Map<Class<?>, Object> extractSystems(Iterable<Object> systems) {
+        Map<Class<?>, Object> context = new HashMap<Class<?>, Object>();
 
         // Figure out shared objects
-        for (S system : systems) {
+        for (Object system : systems) {
             final RegisterSystem registerSystemAnnotation = system.getClass().getAnnotation(RegisterSystem.class);
             if (registerSystemAnnotation != null) {
                 for (Class<?> clazz : registerSystemAnnotation.shared()) {
@@ -25,23 +35,26 @@ public class ShareSystemInitializer<S> implements SystemInitializer<S> {
                 }
             }
         }
+        context.putAll(additionalSystems);
+        return Collections.unmodifiableMap(context);
+    }
 
+    @Override
+    public void initializeObjects(Iterable<Object> objects, Map<Class<?>, Object> systems) {
         // Enrich systems with shared components
-        for (S system : systems) {
-            Class<? extends Object> systemClass = system.getClass();
+        for (Object object : objects) {
+            Class<? extends Object> systemClass = object.getClass();
             while (true) {
-                initForClass(context, system, systemClass);
+                initForClass(systems, object, systemClass);
                 systemClass = systemClass.getSuperclass();
                 if (systemClass == Object.class) {
                     break;
                 }
             }
         }
-
-        return Collections.unmodifiableMap(context);
     }
 
-    private void initForClass(Map<Class<?>, S> context, S system, Class<? extends Object> systemClass) {
+    private void initForClass(Map<Class<?>, Object> context, Object system, Class<? extends Object> systemClass) {
         for (Field field : systemClass.getDeclaredFields()) {
             final Inject inject = field.getAnnotation(Inject.class);
             if (inject != null) {
@@ -59,9 +72,5 @@ public class ShareSystemInitializer<S> implements SystemInitializer<S> {
                 }
             }
         }
-    }
-
-    @Override
-    public void destroySystems(Iterable<S> systems) {
     }
 }

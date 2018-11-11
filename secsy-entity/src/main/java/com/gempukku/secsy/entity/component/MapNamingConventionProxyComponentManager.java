@@ -1,10 +1,9 @@
-package com.gempukku.secsy.entity.component.map;
+package com.gempukku.secsy.entity.component;
 
+import com.gempukku.secsy.context.annotation.Inject;
 import com.gempukku.secsy.context.annotation.RegisterSystem;
 import com.gempukku.secsy.entity.Component;
 import com.gempukku.secsy.entity.EntityRef;
-import com.gempukku.secsy.entity.component.ComponentManager;
-import com.gempukku.secsy.entity.component.InternalComponentManager;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -13,21 +12,29 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-@RegisterSystem(profiles = {"nameConventionComponents"}, shared = {ComponentManager.class, InternalComponentManager.class})
+@RegisterSystem(profiles = "nameConventionComponents", shared = {ComponentManager.class, InternalComponentManager.class})
 public class MapNamingConventionProxyComponentManager implements ComponentManager, InternalComponentManager {
+    @Inject
+    private EntityComponentFieldHandler entityComponentFieldHandler;
+
     private static final Object NULL_VALUE = new Object();
-    private Map<Class<? extends Component>, ComponentDef> componentDefinitions = new HashMap<>();
+    private Map<Class<? extends Component>, ComponentDef> componentDefinitions = new HashMap<Class<? extends Component>, ComponentDef>();
 
     @Override
     public <T extends Component> T createComponent(EntityRef entity, Class<T> clazz) {
+        ComponentDef componentDef = getComponentDef(clazz);
+        //noinspection unchecked
+        return (T) Proxy.newProxyInstance(clazz.getClassLoader(), new Class[]{clazz},
+                new ComponentView(entity, clazz, new HashMap<String, Object>(), false, componentDef));
+    }
+
+    private <T extends Component> ComponentDef getComponentDef(Class<T> clazz) {
         ComponentDef componentDef = componentDefinitions.get(clazz);
         if (componentDef == null) {
             componentDef = new ComponentDef(clazz);
             componentDefinitions.put(clazz, componentDef);
         }
-        //noinspection unchecked
-        return (T) Proxy.newProxyInstance(clazz.getClassLoader(), new Class[]{clazz},
-                new ComponentView(entity, clazz, new HashMap<>(), false, componentDef.handlerMap));
+        return componentDef;
     }
 
     @Override
@@ -45,12 +52,20 @@ public class MapNamingConventionProxyComponentManager implements ComponentManage
         final ComponentView componentView = extractComponentView(originalComponent);
 
         Map<String, Object> values = componentView.storedValues;
-        if (!useOriginalReference)
-            values = new HashMap<>(values);
+        if (!useOriginalReference) {
+            Map<String, Object> result = new HashMap<String, Object>();
+            Map<String, Class<?>> fieldTypes = componentView.componentDef.fieldTypes;
+            for (Map.Entry<String, Object> field : values.entrySet()) {
+                String fieldName = field.getKey();
+                result.put(fieldName, entityComponentFieldHandler.<Object>copyFromEntity(field.getValue(), (Class<Object>) fieldTypes.get(fieldName)));
+            }
+
+            values = result;
+        }
 
         //noinspection unchecked
         return (T) Proxy.newProxyInstance(componentView.clazz.getClassLoader(), new Class[]{componentView.clazz},
-                new ComponentView(entity, componentView.clazz, values, readOnly, componentView.handlers));
+                new ComponentView(entity, componentView.clazz, values, readOnly, componentView.componentDef));
     }
 
     @Override
@@ -61,13 +76,21 @@ public class MapNamingConventionProxyComponentManager implements ComponentManage
             String fieldName = changeEntry.getKey();
             Object fieldValue = changeEntry.getValue();
 
+            Object oldValue = destination.storedValues.get(fieldName);
+            Class<?> fieldClass = destination.componentDef.getFieldTypes().get(fieldName);
+
             if (fieldValue == NULL_VALUE)
                 destination.storedValues.remove(fieldName);
             else
-                destination.storedValues.put(fieldName, fieldValue);
+                destination.storedValues.put(fieldName, entityComponentFieldHandler.<Object>storeIntoEntity(oldValue, fieldValue, (Class<Object>) fieldClass));
         }
 
         source.changes.clear();
+    }
+
+    @Override
+    public void invalidateComponent(Component component) {
+        extractComponentView(component).invalidate();
     }
 
     @Override
@@ -93,7 +116,17 @@ public class MapNamingConventionProxyComponentManager implements ComponentManage
     @Override
     public Map<String, Class<?>> getComponentFieldTypes(Component component) {
         Class<Component> clazz = getComponentClass(component);
-        return Collections.unmodifiableMap(componentDefinitions.get(clazz).getFieldTypes());
+        return Collections.unmodifiableMap(getComponentDef(clazz).getFieldTypes());
+    }
+
+    @Override
+    public Map<String, Class<?>> getComponentFieldTypes(Class<? extends Component> component) {
+        return Collections.unmodifiableMap(getComponentDef(component).getFieldTypes());
+    }
+
+    @Override
+    public Map<String, Class<?>> getComponentFieldContainedClasses(Class<? extends Component> component) {
+        return Collections.unmodifiableMap(getComponentDef(component).getFieldContainers());
     }
 
     @Override
@@ -104,11 +137,12 @@ public class MapNamingConventionProxyComponentManager implements ComponentManage
 
     @Override
     public void setComponentFieldValue(Component component, String fieldName, Object fieldValue) {
-        extractComponentView(component).storedValues.put(fieldName, fieldValue);
+        ComponentView componentView = extractComponentView(component);
+        componentView.storedValues.put(fieldName, fieldValue);
     }
 
     private Map<String, Object> createConsolidatedFieldMap(ComponentView componentView) {
-        Map<String, Object> values = new HashMap<>();
+        Map<String, Object> values = new HashMap<String, Object>();
 
         values.putAll(componentView.storedValues);
 
@@ -130,40 +164,53 @@ public class MapNamingConventionProxyComponentManager implements ComponentManage
     }
 
     private class ComponentDef {
-        private Map<String, Class<?>> fieldTypes = new HashMap<>();
-        private Map<String, MethodHandler> handlerMap = new HashMap<>();
+        private Map<String, Class<?>> fieldTypes = new HashMap<String, Class<?>>();
+        private Map<String, Class<?>> fieldContainers = new HashMap<String, Class<?>>();
+        private Map<String, MethodHandler> handlerMap = new HashMap<String, MethodHandler>();
 
         private ComponentDef(Class<? extends Component> clazz) {
+            processDeclaredMethods(clazz);
+        }
+
+        private void processDeclaredMethods(Class<?> clazz) {
             for (Method method : clazz.getDeclaredMethods()) {
+                Class<?> containedClass = null;
+                Container annotation = method.getAnnotation(Container.class);
+                if (annotation != null)
+                    containedClass = annotation.value();
                 String methodName = method.getName();
                 if (methodName.startsWith("get")) {
-                    addGetMethod(method, getFieldName(methodName, 3));
+                    addGetMethod(method, getFieldName(methodName, 3), containedClass);
                 } else if (methodName.startsWith("is")) {
-                    addGetMethod(method, getFieldName(methodName, 2));
+                    addGetMethod(method, getFieldName(methodName, 2), containedClass);
                 } else if (methodName.startsWith("set")) {
                     String fieldName = getFieldName(methodName, 3);
-                    addFieldType(fieldName, method.getParameterTypes()[0]);
+                    addFieldType(fieldName, method.getParameterTypes()[0], containedClass);
                     handlerMap.put(methodName, new SetMethodHandler(fieldName));
                 } else {
                     throw new IllegalStateException("Invalid component definition, component uses unrecognized method name: " + methodName);
                 }
             }
+            for (Class<?> parentInterface : clazz.getInterfaces()) {
+                processDeclaredMethods(parentInterface);
+            }
         }
 
-        private void addGetMethod(Method method, String fieldName) {
+        private void addGetMethod(Method method, String fieldName, Class<?> containedClass) {
             final Class<?> fieldType = method.getReturnType();
 
-            addFieldType(fieldName, fieldType);
+            addFieldType(fieldName, fieldType, containedClass);
             handlerMap.put(method.getName(), new GetMethodHandler(fieldName, fieldType));
         }
 
-        private void addFieldType(String fieldName, Class<?> fieldType) {
+        private void addFieldType(String fieldName, Class<?> fieldType, Class<?> containedClass) {
             final Class<?> existingType = fieldTypes.get(fieldName);
             if (existingType != null) {
                 if (existingType != fieldType) {
                     throw new IllegalStateException("Invalid component definition, field " + fieldName + " uses different value types");
                 }
             } else {
+                fieldContainers.put(fieldName, containedClass);
                 fieldTypes.put(fieldName, fieldType);
             }
         }
@@ -171,35 +218,49 @@ public class MapNamingConventionProxyComponentManager implements ComponentManage
         private Map<String, Class<?>> getFieldTypes() {
             return fieldTypes;
         }
+
+        public Map<String, Class<?>> getFieldContainers() {
+            return fieldContainers;
+        }
     }
 
     private class ComponentView implements InvocationHandler {
         private EntityRef entity;
         private Class<? extends Component> clazz;
         private Map<String, Object> storedValues;
-        private Map<String, Object> changes = new HashMap<>();
-        private Map<String, MethodHandler> handlers = new HashMap<>();
+        private Map<String, Object> changes = new HashMap<String, Object>();
+        private Map<String, MethodHandler> handlers = new HashMap<String, MethodHandler>();
         private boolean readOnly;
+        private ComponentDef componentDef;
+        private boolean invalid;
 
         private ComponentView(EntityRef entity, Class<? extends Component> clazz, Map<String, Object> storedValues,
-                              boolean readOnly, Map<String, MethodHandler> handlers) {
+                              boolean readOnly, ComponentDef componentDef) {
             this.entity = entity;
             this.clazz = clazz;
             this.storedValues = storedValues;
             this.readOnly = readOnly;
-            this.handlers = handlers;
+            this.componentDef = componentDef;
+            this.handlers = componentDef.handlerMap;
+        }
+
+        public void invalidate() {
+            invalid = true;
         }
 
         @Override
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+            if (invalid)
+                throw new IllegalStateException("Attempted to invoke a method on a Component that had it's state saved");
+
             MethodHandler methodHandler = handlers.get(method.getName());
             if (methodHandler != null)
-                return methodHandler.handleInvocation(storedValues, changes, readOnly, args);
+                return methodHandler.handleInvocation(proxy, method, storedValues, changes, readOnly, args);
             throw new UnsupportedOperationException("Component method invoked without property defined: " + clazz.getName() + ":" + method.getName());
         }
     }
 
-    private static class GetMethodHandler implements MethodHandler {
+    private class GetMethodHandler implements MethodHandler {
         private String fieldName;
         private Class<?> resultClass;
 
@@ -209,77 +270,67 @@ public class MapNamingConventionProxyComponentManager implements ComponentManage
         }
 
         @Override
-        public Object handleInvocation(Map<String, Object> storedValues, Map<String, Object> changes, boolean readOnly, Object[] args) {
+        public Object handleInvocation(Object proxy, Method method, Map<String, Object> storedValues, Map<String, Object> changes, boolean readOnly, Object[] args) {
             final Object changedValue = changes.get(fieldName);
             if (changedValue != null) {
                 if (changedValue == NULL_VALUE) {
-                    return convertToResult(null, resultClass);
+                    return convertToResult(proxy, method, null, resultClass);
                 } else {
-                    return convertToResult(changedValue, resultClass);
+                    return convertToResult(proxy, method, changedValue, resultClass);
                 }
             } else {
-                return convertToResult(storedValues.get(fieldName), resultClass);
+                Object value = storedValues.get(fieldName);
+                if (value != null)
+                    value = entityComponentFieldHandler.copyFromEntity(value, (Class<Object>) resultClass);
+                return convertToResult(proxy, method, value, resultClass);
             }
         }
 
-        private Object convertToResult(Object value, Class<?> resultClass) {
+        private Object getDefaultValue(Object proxy, Method method, Class<?> resultClass) {
             if (resultClass.isPrimitive()) {
                 if (resultClass == boolean.class) {
-                    if (value == null)
-                        return false;
-                    return value;
-                }
-                Number numberValue = (Number) value;
-                if (resultClass == float.class) {
-                    if (numberValue == null)
-                        return 0f;
-                    return numberValue.floatValue();
+                    return false;
+                } else if (resultClass == float.class) {
+                    return 0f;
                 } else if (resultClass == double.class) {
-                    if (numberValue == null)
-                        return 0d;
-                    return numberValue.doubleValue();
+                    return 0d;
                 } else if (resultClass == long.class) {
-                    if (numberValue == null)
-                        return 0L;
-                    return numberValue.longValue();
+                    return 0L;
                 } else if (resultClass == int.class) {
-                    if (numberValue == null)
-                        return 0;
-                    return numberValue.intValue();
+                    return 0;
                 } else if (resultClass == short.class) {
-                    if (numberValue == null)
-                        return (short) 0;
-                    return numberValue.shortValue();
+                    return (short) 0;
                 } else if (resultClass == char.class) {
-                    if (numberValue == null)
-                        return (char) 0;
-                    return (char) numberValue.intValue();
+                    return (char) 0;
                 } else if (resultClass == byte.class) {
-                    if (numberValue == null)
-                        return (byte) 0;
-                    return numberValue.byteValue();
+                    return (byte) 0;
                 }
+                throw new IllegalStateException("Unable to find default value for this type");
             }
+            return null;
+        }
+
+        private Object convertToResult(Object proxy, Method method, Object value, Class<?> resultClass) {
             if (value == null)
-                return null;
-            if (resultClass.isAssignableFrom(Number.class)) {
-                if (resultClass == Boolean.class) {
+                return getDefaultValue(proxy, method, resultClass);
+            if (resultClass.isPrimitive() || resultClass.isAssignableFrom(Number.class)) {
+                if (resultClass == boolean.class || resultClass == Boolean.class) {
                     return value;
                 }
                 Number numberValue = (Number) value;
-                if (resultClass == Float.class) {
+                if (resultClass == float.class || resultClass == Float.class) {
                     return numberValue.floatValue();
-                } else if (resultClass == Double.class) {
+                } else if (resultClass == double.class || resultClass == Double.class) {
                     return numberValue.doubleValue();
-                } else if (resultClass == Long.class) {
+                } else if (resultClass == long.class || resultClass == Long.class) {
                     return numberValue.longValue();
-                } else if (resultClass == Integer.class) {
+                } else if (resultClass == int.class || resultClass == Integer.class) {
                     return numberValue.intValue();
-                } else if (resultClass == Short.class) {
+                } else if (resultClass == short.class || resultClass == Short.class) {
                     return numberValue.shortValue();
-                } else if (resultClass == Character.class) {
+                } else if (resultClass == char.class || resultClass == Character.class) {
                     return (char) numberValue.intValue();
-                } else if (resultClass == Byte.class) {
+                } else if (resultClass == byte.class || resultClass == Byte.class) {
                     return numberValue.byteValue();
                 }
             }
@@ -295,7 +346,7 @@ public class MapNamingConventionProxyComponentManager implements ComponentManage
         }
 
         @Override
-        public Object handleInvocation(Map<String, Object> storedValues, Map<String, Object> changes, boolean readOnly, Object[] args) {
+        public Object handleInvocation(Object proxy, Method method, Map<String, Object> storedValues, Map<String, Object> changes, boolean readOnly, Object[] args) {
             if (readOnly)
                 throw new UnsupportedOperationException("This is a read only component");
             if (args[0] == null) {
@@ -307,6 +358,6 @@ public class MapNamingConventionProxyComponentManager implements ComponentManage
     }
 
     private interface MethodHandler {
-        Object handleInvocation(Map<String, Object> storedValues, Map<String, Object> changes, boolean readOnly, Object[] args);
+        Object handleInvocation(Object proxy, Method method, Map<String, Object> storedValues, Map<String, Object> changes, boolean readOnly, Object[] args);
     }
 }

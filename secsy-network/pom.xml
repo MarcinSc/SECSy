@@ -13,7 +13,7 @@
     <dependencies>
         <dependency>
             <groupId>com.gempukku.secsy</groupId>
-            <artifactId>secsy-serialization</artifactId>
+            <artifactId>secsy-entity</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

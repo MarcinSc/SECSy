@@ -14,6 +14,7 @@ public interface EntityRef {
     /**
      * Creates a new component of the specified class if this reference does not have one yet.
      * If it has one already, throws an exception.
+     *
      * @param clazz
      * @param <T>
      * @return
@@ -22,6 +23,7 @@ public interface EntityRef {
 
     /**
      * Gets an existing component (or returns null) for this entity.
+     *
      * @param clazz
      * @param <T>
      * @return
@@ -30,12 +32,14 @@ public interface EntityRef {
 
     /**
      * Lists components for this entity.
+     *
      * @return
      */
     Iterable<Class<? extends Component>> listComponents();
 
     /**
      * Checks if that entity has the component.
+     *
      * @param component
      * @return
      */
@@ -43,6 +47,7 @@ public interface EntityRef {
 
     /**
      * Checks if this entity still exists.
+     *
      * @return
      */
     boolean exists();
@@ -54,6 +59,7 @@ public interface EntityRef {
 
     /**
      * Removes specified components from the underlying entity.
+     *
      * @param clazz
      * @param <T>
      */
@@ -61,6 +67,7 @@ public interface EntityRef {
 
     /**
      * Sends an event to an entity.
+     *
      * @param event
      */
     void send(Event event);

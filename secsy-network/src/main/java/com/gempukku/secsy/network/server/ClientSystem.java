@@ -31,6 +31,11 @@ public class ClientSystem implements ClientManager, EntityEventListener, LifeCyc
     private Map<String, Set<Integer>> entitiesClientIsAwareOf = new HashMap<>();
 
     @Override
+    public float getPriority() {
+        return 0;
+    }
+
+    @Override
     public void initialize() {
         internalEntityManager.addEntityEventListener(this);
         internalGameLoop.addInternalGameLoopListener(this);

@@ -15,6 +15,7 @@ public @interface RegisterSystem {
      * List of profiles this system should be included in when gathering data for context.
      * This system will be included only if all its profiles are activated for the context.
      * If this returns an empty array (default) it will be included in all contexts generated.
+     *
      * @return
      */
     String[] profiles() default {};
@@ -22,6 +23,7 @@ public @interface RegisterSystem {
     /**
      * List of interfaces this system exposes to other systems participating in a context.
      * The class annotated should implement all the interfaces that this annotation contains.
+     *
      * @return
      */
     Class<?>[] shared() default {};

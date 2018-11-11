@@ -3,7 +3,9 @@ package com.gempukku.secsy.entity.io;
 import com.gempukku.secsy.entity.Component;
 
 public interface EntityData {
-    Iterable<? extends ComponentData> getComponents();
+    Iterable<? extends ComponentData> getComponentsData();
 
-    ComponentData getComponent(Class<? extends Component> componentClass);
+    ComponentData getComponentData(Class<? extends Component> componentClass);
+
+    boolean hasComponent(Class<? extends Component> componentClass);
 }

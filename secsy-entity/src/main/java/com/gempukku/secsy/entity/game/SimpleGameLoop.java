@@ -11,7 +11,7 @@ public class SimpleGameLoop implements InternalGameLoop {
     @Inject
     private GameLoopEntityProvider gameLoopEntityProvider;
 
-    private PriorityCollection<InternalGameLoopListener> internalGameLoopListeners = new PriorityCollection<>();
+    private PriorityCollection<InternalGameLoopListener> internalGameLoopListeners = new PriorityCollection<InternalGameLoopListener>();
 
     @Override
     public void addInternalGameLoopListener(InternalGameLoopListener internalGameLoopListener) {

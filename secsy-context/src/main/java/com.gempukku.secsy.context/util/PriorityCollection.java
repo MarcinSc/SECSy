@@ -4,15 +4,17 @@ import com.google.common.base.Supplier;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.TreeMap;
+import java.util.*;
 
 public class PriorityCollection<T> implements Iterable<T> {
-    private Multimap<Float, T> multimap = Multimaps.newMultimap(new TreeMap<>(Collections.reverseOrder()),
-            (Supplier<Collection<T>>) ArrayList::new);
+    private Multimap<Float, T> multimap = Multimaps.newMultimap(
+            new TreeMap<Float, Collection<T>>(Collections.reverseOrder()),
+            new Supplier<Collection<T>>() {
+                @Override
+                public Collection<T> get() {
+                    return new ArrayList<T>();
+                }
+            });
 
     public void add(T t) {
         float priority = getItemPriority(t);

@@ -1,17 +1,17 @@
 package com.gempukku.secsy.entity.dispatch;
 
 import com.gempukku.secsy.context.SystemContext;
-import com.gempukku.secsy.entity.EntityRef;
-import com.gempukku.secsy.entity.SampleComponent;
-import com.gempukku.secsy.entity.SampleComponent2;
-import com.gempukku.secsy.entity.SampleEvent;
-import com.gempukku.secsy.entity.SampleSystem;
+import com.gempukku.secsy.context.system.ShareSystemInitializer;
+import com.gempukku.secsy.entity.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.junit.Assert.*;
 
@@ -25,9 +25,13 @@ public class AnnotationDrivenEventDispatcherTest {
         sampleSystem = new SampleSystem();
         dispatcher = new AnnotationDrivenEventDispatcher();
         SystemContext context = Mockito.mock(SystemContext.class);
-        Mockito.when(context.getSystems()).thenReturn(Arrays.asList(sampleSystem));
-        dispatcher.setContext(context);
-        dispatcher.postInitialize();
+        Mockito.when(context.getSystems()).thenReturn(Arrays.<Object>asList(sampleSystem));
+        ShareSystemInitializer initializer = new ShareSystemInitializer();
+        Map<Class<?>, Object> systems = new HashMap<Class<?>, Object>();
+        systems.put(SystemContext.class, context);
+        systems.put(InternalEntityManager.class, Mockito.mock(InternalEntityManager.class));
+        initializer.initializeObjects(Collections.<Object>singleton(dispatcher), systems);
+        dispatcher.initialize();
 
         entity = Mockito.mock(EntityRef.class);
     }

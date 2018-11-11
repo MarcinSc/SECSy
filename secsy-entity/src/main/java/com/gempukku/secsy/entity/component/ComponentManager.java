@@ -3,8 +3,6 @@ package com.gempukku.secsy.entity.component;
 import com.gempukku.secsy.context.annotation.API;
 import com.gempukku.secsy.entity.Component;
 
-import java.util.Map;
-
 /**
  * Interface for a class responsible for creating objects storing data for components in memory.
  */

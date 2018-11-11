@@ -2,63 +2,66 @@ package com.gempukku.secsy.entity;
 
 import com.gempukku.secsy.context.annotation.Inject;
 import com.gempukku.secsy.context.annotation.RegisterSystem;
-import com.gempukku.secsy.context.system.LifeCycleSystem;
+import com.gempukku.secsy.context.system.AbstractLifeCycleSystem;
 import com.gempukku.secsy.context.util.PriorityCollection;
 import com.gempukku.secsy.entity.component.ComponentManager;
 import com.gempukku.secsy.entity.component.InternalComponentManager;
-import com.gempukku.secsy.entity.event.AfterComponentAdded;
-import com.gempukku.secsy.entity.event.AfterEntityLoaded;
-import com.gempukku.secsy.entity.event.BeforeEntityUnloaded;
 import com.gempukku.secsy.entity.event.Event;
 import com.gempukku.secsy.entity.game.InternalGameLoop;
 import com.gempukku.secsy.entity.game.InternalGameLoopListener;
+import com.gempukku.secsy.entity.io.ComponentData;
 import com.gempukku.secsy.entity.io.EntityData;
+import com.gempukku.secsy.entity.io.StoredEntityData;
+import com.gempukku.secsy.entity.prefab.PrefabManager;
 import com.gempukku.secsy.entity.relevance.EntityRelevanceRule;
 import com.gempukku.secsy.entity.relevance.EntityRelevanceRuleRegistry;
+import com.google.common.base.Function;
+import com.google.common.base.Predicate;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
 
+import javax.annotation.Nullable;
 import java.util.*;
 
 @RegisterSystem(profiles = "simpleEntityManager", shared = {EntityManager.class, InternalEntityManager.class, EntityRelevanceRuleRegistry.class})
-public class SimpleEntityManager implements EntityManager, InternalEntityManager,
-        EntityRelevanceRuleRegistry, LifeCycleSystem, InternalGameLoopListener {
+public class SimpleEntityManager extends AbstractLifeCycleSystem implements EntityManager, InternalEntityManager,
+        EntityRelevanceRuleRegistry, InternalGameLoopListener {
     @Inject
     private ComponentManager componentManager;
     @Inject
     private InternalComponentManager internalComponentManager;
     @Inject
     private InternalGameLoop internalGameLoop;
+    @Inject(optional = true)
+    private PrefabManager prefabManager;
 
-    private PriorityCollection<EntityEventListener> entityEventListeners = new PriorityCollection<>();
-    private PriorityCollection<EntityListener> entityListeners = new PriorityCollection<>();
-    private Set<EntityRelevanceRule> entityRelevanceRules = new HashSet<>();
+    private Set<EntityRelevanceRule> entityRelevanceRules = new HashSet<EntityRelevanceRule>();
 
     private int maxId;
-    private Set<SimpleEntity> entities = new HashSet<>();
+    private Set<SimpleEntity> entities = new HashSet<SimpleEntity>();
 
-    private EntityListener dispatchEntityListener = new DispatchEntityListener();
-    private EntityEventListener dispatchEntityEventListener = new DispatchEntityEventListener();
+    private DispatchEntityListener dispatchEntityListener = new DispatchEntityListener();
+    private DispatchEntityEventListener dispatchEntityEventListener = new DispatchEntityEventListener();
 
     @Override
     public void addEntityEventListener(EntityEventListener entityEventListener) {
-        entityEventListeners.add(entityEventListener);
+        dispatchEntityEventListener.entityEventListeners.add(entityEventListener);
     }
 
     @Override
     public void removeEntityEventListener(EntityEventListener entityEventListener) {
-        entityEventListeners.remove(entityEventListener);
+        dispatchEntityEventListener.entityEventListeners.remove(entityEventListener);
     }
 
     @Override
     public void addEntityListener(EntityListener entityListener) {
-        entityListeners.add(entityListener);
+        dispatchEntityListener.entityListeners.add(entityListener);
     }
 
     @Override
     public void removeEntityListener(EntityListener entityListener) {
-        entityListeners.remove(entityListener);
+        dispatchEntityListener.entityListeners.remove(entityListener);
     }
 
     @Override
@@ -93,7 +96,9 @@ public class SimpleEntityManager implements EntityManager, InternalEntityManager
     public void postUpdate() {
         // First go through all the registered rules and tell them to update
         // their internal rules
-        entityRelevanceRules.forEach(EntityRelevanceRule::determineRelevance);
+        for (EntityRelevanceRule entityRelevanceRule : entityRelevanceRules) {
+            entityRelevanceRule.determineRelevance();
+        }
 
         // Determine, which entities are unloaded for which rule
         Multimap<EntityRelevanceRule, SimpleEntity> entitiesToUnloadByRules = determineEntitiesToUnloadByRules();
@@ -103,26 +108,22 @@ public class SimpleEntityManager implements EntityManager, InternalEntityManager
 
         // Send events to them
         Collection<SimpleEntity> entitiesToUnload = entitiesToUnloadByRules.values();
-        notifyEntitiesTheyAreBeingUnloaded(entitiesToUnload);
 
         // Unload the entities
         unloadTheEntities(entitiesToUnload);
 
-        entityListeners.forEach(
-                listener -> listener.entitiesModified(entitiesToUnload));
+        dispatchEntityListener.entitiesModified(entitiesToUnload);
 
         int lastMaxId = maxId;
 
         // Load any new entities that became relevant
         Set<SimpleEntity> loadedEntities = loadNewlyRelevantEntities();
 
-        entityListeners.forEach(
-                listener -> listener.entitiesModified(loadedEntities));
+        dispatchEntityListener.entitiesModified(loadedEntities);
 
-        // Send events to them
-        sendEventsToThem(loadedEntities, lastMaxId);
-
-        entityRelevanceRules.forEach(EntityRelevanceRule::newRelevantEntitiesLoaded);
+        for (EntityRelevanceRule entityRelevanceRule : entityRelevanceRules) {
+            entityRelevanceRule.newRelevantEntitiesLoaded();
+        }
     }
 
     @Override
@@ -135,68 +136,53 @@ public class SimpleEntityManager implements EntityManager, InternalEntityManager
         return String.valueOf(getEntityId(entityRef));
     }
 
-    private void sendEventsToThem(Set<SimpleEntity> loadedEntities, int createdIfIdGreaterThan) {
-        for (SimpleEntity entity : loadedEntities) {
-            Map<Class<? extends Component>, Component> components = new HashMap<>();
-            for (Map.Entry<Class<? extends Component>, Component> originalComponents : entity.entityValues.entrySet()) {
-                components.put(originalComponents.getKey(), internalComponentManager.copyComponentUnmodifiable(originalComponents.getValue(), false));
-            }
-
-            SimpleEntityRef entityRef = createSimpleEntityRef(entity, false);
-            if (entity.getEntityId() <= createdIfIdGreaterThan) {
-                entityRef.send(new AfterEntityLoaded(components));
-            } else {
-                entityRef.send(new AfterComponentAdded(components));
-            }
-        }
-    }
-
     private Set<SimpleEntity> loadNewlyRelevantEntities() {
-        Set<SimpleEntity> loadedEntities = new HashSet<>();
+        Set<SimpleEntity> loadedEntities = new HashSet<SimpleEntity>();
         for (EntityRelevanceRule entityRelevanceRule : entityRelevanceRules) {
-            entityRelevanceRule.getNewRelevantEntities().forEach(
-                    entityData -> {
-                        int id = entityData.getEntityId();
-                        if (id == 0)
-                            id = ++maxId;
-                        SimpleEntity entity = new SimpleEntity(internalComponentManager, id);
-                        addEntityDataToEntity(entityData, entity);
-                        entities.add(entity);
-                        loadedEntities.add(entity);
-                    });
+            for (StoredEntityData entityData : entityRelevanceRule.getNewRelevantEntities()) {
+                int id = entityData.getEntityId();
+                if (id == 0)
+                    id = ++maxId;
+                SimpleEntity entity = new SimpleEntity(internalComponentManager, id);
+                addEntityDataToEntity(entityData, entity);
+                entities.add(entity);
+                loadedEntities.add(entity);
+            }
         }
         return loadedEntities;
     }
 
     private void addEntityDataToEntity(EntityData entityData, SimpleEntity entity) {
-        entityData.getComponents().forEach(
-                componentData -> {
-                    Class<? extends Component> componentClass = componentData.getComponentClass();
-                    Component component = internalComponentManager.createComponent(null, componentClass);
-                    componentData.getFields().entrySet().forEach(
-                            fieldNameAndValue -> internalComponentManager.setComponentFieldValue(component, fieldNameAndValue.getKey(), fieldNameAndValue.getValue()));
-                    entity.entityValues.put(componentClass, component);
-                });
+        for (ComponentData componentData : entityData.getComponentsData()) {
+            Class<? extends Component> componentClass = componentData.getComponentClass();
+            final Component component = createComponentFromData(componentData, componentClass);
+            entity.entityValues.put(componentClass, component);
+            entity.removedComponents.remove(componentClass);
+        }
+    }
+
+    private <T extends Component> T createComponentFromData(ComponentData componentData, Class<T> componentClass) {
+        final T component = internalComponentManager.createComponent(null, componentClass);
+        componentData.outputFields(
+                new ComponentData.ComponentDataOutput() {
+                    @Override
+                    public void addField(String field, Object value) {
+                        if (value instanceof List) {
+                            internalComponentManager.setComponentFieldValue(component, field, new LinkedList((List) value));
+                        } else {
+                            internalComponentManager.setComponentFieldValue(component, field, value);
+                        }
+                    }
+                }
+        );
+        return component;
     }
 
     private void unloadTheEntities(Collection<SimpleEntity> entitiesToUnload) {
-        entitiesToUnload.forEach(
-                entity -> {
-                    entity.exists = false;
-                    entities.remove(entity);
-                });
-    }
-
-    private void notifyEntitiesTheyAreBeingUnloaded(Collection<SimpleEntity> entitiesToUnload) {
-        entitiesToUnload.forEach(
-                entity -> {
-                    Map<Class<? extends Component>, Component> components = new HashMap<>();
-                    for (Map.Entry<Class<? extends Component>, Component> originalComponents : entity.entityValues.entrySet()) {
-                        components.put(originalComponents.getKey(), internalComponentManager.copyComponentUnmodifiable(originalComponents.getValue(), false));
-                    }
-
-                    createSimpleEntityRef(entity, false).send(new BeforeEntityUnloaded(components));
-                });
+        for (SimpleEntity entity : entitiesToUnload) {
+            entity.exists = false;
+            entities.remove(entity);
+        }
     }
 
     private void tellRulesToStoreUnloadingEntities(Multimap<EntityRelevanceRule, SimpleEntity> entitiesToUnload) {
@@ -224,21 +210,29 @@ public class SimpleEntityManager implements EntityManager, InternalEntityManager
     }
 
     @Override
-    public EntityRef createEntity(EntityData entityData) {
+    public EntityRef createEntityFromPrefab(String prefabName) {
+        if (prefabManager == null)
+            throw new RuntimeException("Unable to read prefab - prefab manager not defined");
+
+        EntityData prefabByName = prefabManager.getPrefabByName(prefabName);
+
+        SimpleEntity entity = new SimpleEntity(internalComponentManager, ++maxId, prefabByName);
+        entities.add(entity);
+
+        dispatchEntityListener.entitiesModified(Collections.singleton(entity));
+
+        return createSimpleEntityRef(entity, false);
+    }
+
+    @Override
+    public EntityRef createEntityFromData(EntityData entityData) {
         SimpleEntity entity = new SimpleEntity(internalComponentManager, ++maxId);
         addEntityDataToEntity(entityData, entity);
         entities.add(entity);
 
-        Map<Class<? extends Component>, Component> components = new HashMap<>();
-        entity.entityValues.forEach(
-                (clazz, component) -> components.put(clazz, internalComponentManager.copyComponentUnmodifiable(component, false)));
+        dispatchEntityListener.entitiesModified(Collections.singleton(entity));
 
-        entityListeners.forEach(
-                listener -> listener.entitiesModified(Collections.singleton(entity)));
-
-        SimpleEntityRef entityRef = createSimpleEntityRef(entity, false);
-        dispatchEntityEventListener.eventSent(entityRef, new AfterComponentAdded(components));
-        return entityRef;
+        return createSimpleEntityRef(entity, false);
     }
 
     @Override
@@ -276,26 +270,44 @@ public class SimpleEntityManager implements EntityManager, InternalEntityManager
     }
 
     @Override
-    public Iterable<EntityRef> getEntitiesWithComponents(Class<? extends Component> component, Class<? extends Component>... additionalComponents) {
+    public Iterable<EntityRef> getEntitiesWithComponents(final Class<? extends Component> component, final Class<? extends Component>... additionalComponents) {
         return Iterables.transform(Iterables.filter(entities,
-                entity -> {
-                    if (!entity.entityValues.containsKey(component))
-                        return false;
-
-                    for (Class<? extends Component> additionalComponent : additionalComponents) {
-                        if (!entity.entityValues.containsKey(additionalComponent))
+                new Predicate<SimpleEntity>() {
+                    @Override
+                    public boolean apply(@Nullable SimpleEntity entity) {
+                        if (!entity.hasComponent(component))
                             return false;
-                    }
 
-                    return true;
+                        for (Class<? extends Component> additionalComponent : additionalComponents) {
+                            if (!entity.hasComponent(additionalComponent))
+                                return false;
+                        }
+
+                        return true;
+                    }
                 }),
-                entity -> createSimpleEntityRef(entity, false));
+                new Function<SimpleEntity, EntityRef>() {
+                    @Override
+                    public EntityRef apply(@Nullable SimpleEntity entity) {
+                        return createSimpleEntityRef(entity, false);
+                    }
+                });
     }
 
     @Override
     public Iterable<EntityRef> getAllEntities() {
-        return Iterables.transform(new HashSet<>(entities),
-                entity -> createSimpleEntityRef(entity, false));
+        return Iterables.transform(new HashSet<SimpleEntity>(entities),
+                new Function<SimpleEntity, EntityRef>() {
+                    @Override
+                    public EntityRef apply(@Nullable SimpleEntity entity) {
+                        return createSimpleEntityRef(entity, false);
+                    }
+                });
+    }
+
+    @Override
+    public EntityData exposeEntityData(EntityRef entityRef) {
+        return ((SimpleEntityRef) entityRef).getEntity();
     }
 
     private SimpleEntityRef createSimpleEntityRef(SimpleEntity entity, boolean readOnly) {
@@ -304,21 +316,25 @@ public class SimpleEntityManager implements EntityManager, InternalEntityManager
     }
 
     private class DispatchEntityListener implements EntityListener {
+        private PriorityCollection<EntityListener> entityListeners = new PriorityCollection<EntityListener>();
+
         @Override
         public void entitiesModified(Iterable<SimpleEntity> entity) {
-            entityListeners.forEach(
-                    listener -> listener.entitiesModified(entity));
+            for (EntityListener listener : entityListeners) {
+                listener.entitiesModified(entity);
+            }
         }
     }
 
     private class DispatchEntityEventListener implements EntityEventListener {
+        private PriorityCollection<EntityEventListener> entityEventListeners = new PriorityCollection<EntityEventListener>();
+
         @Override
         public void eventSent(EntityRef entity, Event event) {
-            entityEventListeners.forEach(
-                    listener -> {
-                        SimpleEntityRef newEntityRef = createSimpleEntityRef(((SimpleEntityRef) entity).getEntity(), false);
-                        listener.eventSent(newEntityRef, event);
-                    });
+            for (EntityEventListener listener : entityEventListeners) {
+                SimpleEntityRef newEntityRef = createSimpleEntityRef(((SimpleEntityRef) entity).getEntity(), false);
+                listener.eventSent(newEntityRef, event);
+            }
         }
     }
 }

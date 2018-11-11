@@ -2,21 +2,27 @@ package com.gempukku.secsy.entity;
 
 import com.gempukku.secsy.entity.component.InternalComponentManager;
 import com.gempukku.secsy.entity.io.ComponentData;
+import com.gempukku.secsy.entity.io.EntityData;
 import com.gempukku.secsy.entity.io.StoredEntityData;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.*;
 
 public class SimpleEntity implements StoredEntityData {
     private InternalComponentManager internalComponentManager;
-    public int id;
-    public Map<Class<? extends Component>, Component> entityValues = new HashMap<>();
+    public final int id;
+    public Map<Class<? extends Component>, Component> entityValues = new HashMap<Class<? extends Component>, Component>();
+    public Set<Class<? extends Component>> removedComponents = new HashSet<Class<? extends Component>>();
+    public EntityData template;
     public boolean exists = true;
 
-    public SimpleEntity(InternalComponentManager internalComponentManager, int id) {
+    public SimpleEntity(InternalComponentManager internalComponentManager, int id, EntityData template) {
+        this.template = template;
         this.internalComponentManager = internalComponentManager;
         this.id = id;
+    }
+
+    public SimpleEntity(InternalComponentManager internalComponentManager, int id) {
+        this(internalComponentManager, id, null);
     }
 
     @Override
@@ -25,20 +31,39 @@ public class SimpleEntity implements StoredEntityData {
     }
 
     @Override
-    public Iterable<ComponentData> getComponents() {
-        return entityValues.entrySet().stream().map(
-                componentEntry -> convertToComponentData(componentEntry.getKey(), componentEntry.getValue())).collect(Collectors.toList());
+    public Iterable<ComponentData> getComponentsData() {
+        List<ComponentData> result = new LinkedList<ComponentData>();
+        if (template != null) {
+            for (ComponentData componentDataFromTemplate : template.getComponentsData()) {
+                if (!removedComponents.contains(componentDataFromTemplate.getComponentClass())
+                        && !entityValues.containsKey(componentDataFromTemplate.getComponentClass()))
+                    result.add(componentDataFromTemplate);
+            }
+        }
+        for (Map.Entry<Class<? extends Component>, Component> entry : entityValues.entrySet()) {
+            result.add(convertToComponentData(entry.getKey(), entry.getValue()));
+        }
+        return result;
     }
 
     @Override
-    public ComponentData getComponent(Class<? extends Component> componentClass) {
+    public ComponentData getComponentData(Class<? extends Component> componentClass) {
         Component component = entityValues.get(componentClass);
-        if (component == null)
+        if (component == null) {
+            if (!removedComponents.contains(componentClass))
+                return template.getComponentData(componentClass);
             return null;
+        }
         return convertToComponentData(componentClass, component);
     }
 
-    private ComponentData convertToComponentData(Class<? extends Component> componentClass, Component component) {
+    @Override
+    public boolean hasComponent(Class<? extends Component> componentClass) {
+        return entityValues.containsKey(componentClass)
+                || (template != null && !removedComponents.contains(componentClass) && template.hasComponent(componentClass));
+    }
+
+    private ComponentData convertToComponentData(final Class<? extends Component> componentClass, final Component component) {
         return new ComponentData() {
             @Override
             public Class<? extends Component> getComponentClass() {
@@ -46,15 +71,12 @@ public class SimpleEntity implements StoredEntityData {
             }
 
             @Override
-            public Map<String, Object> getFields() {
-                Map<String, Object> result = new HashMap<String, Object>();
-                internalComponentManager.getComponentFieldTypes(component).entrySet().stream().forEach(
-                        fieldDef -> {
-                            String fieldName = fieldDef.getKey();
-                            Object fieldValue = internalComponentManager.getComponentFieldValue(component, fieldName, componentClass);
-                            result.put(fieldName, fieldValue);
-                        });
-                return result;
+            public void outputFields(ComponentDataOutput output) {
+                for (Map.Entry<String, Class<?>> fieldDef : internalComponentManager.getComponentFieldTypes(component).entrySet()) {
+                    String fieldName = fieldDef.getKey();
+                    Object fieldValue = internalComponentManager.getComponentFieldValue(component, fieldName, componentClass);
+                    output.addField(fieldName, fieldValue);
+                }
             }
         };
     }
